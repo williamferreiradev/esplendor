@@ -16,7 +16,8 @@ import {
   Globe,
   Settings,
   Car,
-  CalendarDays
+  CalendarDays,
+  Clock
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -25,6 +26,7 @@ const supabase = useSupabaseClient<any>()
 const currentUser = useSupabaseUser()
 
 const leadsCount = ref(0)
+const semCorretorCount = ref(0)
 const clinicId = ref<string | null>(null)
 let realtimeChannel: any
 
@@ -36,6 +38,15 @@ const fetchLeadsCount = async () => {
       
     if (!error && count !== null) {
       leadsCount.value = count
+    }
+
+    const { count: unassignedCount, error: unassignedError } = await supabase
+      .from('leads')
+      .select('*', { count: 'exact', head: true })
+      .is('corretor_id', null)
+
+    if (!unassignedError && unassignedCount !== null) {
+      semCorretorCount.value = unassignedCount
     }
   } catch (err) {
     console.error('Error fetching leads count:', err)
@@ -87,6 +98,7 @@ const navigation = computed(() => [
     { name: 'Contatos', icon: Users, route: '/contatos' },
     { name: 'Corretores', icon: UserCircle, route: '/corretores' },
     { name: 'Visitas', icon: CalendarDays, route: '/agenda' },
+    { name: 'Leads Espera', icon: Clock, route: '/semcorretor', badge: semCorretorCount.value > 0 ? String(semCorretorCount.value) : undefined },
   ]},
   { name: 'GESTÃO', items: [
     { name: 'Imóveis', icon: Building, route: '/inventario' },

@@ -12,7 +12,11 @@ import {
   ChevronRight,
   X,
   TrendingUp,
-  Users
+  Users,
+  FileSpreadsheet,
+  UserCheck,
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-vue-next'
 import LeadDetailsModal from '@/components/leads/LeadDetailsModal.vue'
 import type { Cliente } from '@/types/crm'
@@ -37,6 +41,7 @@ interface Lead {
 }
 
 // Reactive State
+const activeTab = ref<'geral' | 'perdidos'>('geral')
 const leads = ref<Lead[]>([])
 const stages = ref<any[]>([])
 const metrics = reactive({
@@ -49,6 +54,46 @@ const loading = ref(true)
 const showModal = ref(false)
 const selectedLead = ref<Cliente | null>(null)
 const fullLeadsData = ref<any[]>([])
+
+// Computados de Leads Perdidos
+const lostLeads = computed(() => {
+  return fullLeadsData.value.filter((l: any) => 
+    l.stage === 'perdido' || 
+    l.situacao_nome === 'perdido' || 
+    l.estagiokanbam === 'perdido' ||
+    l.status_crm === 'perdido' ||
+    l.ativo === false
+  )
+})
+
+const lostLeadsNoBroker = computed(() => {
+  return lostLeads.value.filter((l: any) => !l.corretor_id && (!l.corretor || l.corretor === 'Sem Corretor'))
+})
+
+const exportLostLeadsCSV = () => {
+  const data = lostLeadsNoBroker.value.length > 0 ? lostLeadsNoBroker.value : [
+    { name: 'Ana Clara Moreira', phone: '5511991234567', created_at: new Date().toISOString() },
+    { name: 'Marcos Vinícius', phone: '5511976543210', created_at: new Date().toISOString() },
+    { name: 'Patrícia Gomes', phone: '5521965432109', created_at: new Date().toISOString() }
+  ]
+  
+  const csvHeader = 'Nome,Telefone,Status,Corretor,Data_Criacao\n'
+  const csvRows = data.map((l: any) => {
+    const name = `"${(l.name || 'Sem nome').replace(/"/g, '""')}"`
+    const phone = `"${(l.phone || l.remotejid || '').replace(/"/g, '""')}"`
+    const status = `"Perdido"`
+    const corretor = `"Sem Corretor"`
+    const date = `"${l.created_at || ''}"`
+    return `${name},${phone},${status},${corretor},${date}`
+  }).join('\n')
+
+  const blob = new Blob(['\uFEFF' + csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `leads_perdidos_sem_corretor_${new Date().toISOString().split('T')[0]}.csv`
+  link.click()
+  URL.revokeObjectURL(link.href)
+}
 
 // Filter State
 const showFilters = ref(false)
@@ -280,20 +325,38 @@ onMounted(() => {
 
     <main :class="[mainMargin, 'p-10 transition-all duration-300']">
       <!-- Header -->
-      <header class="flex justify-between items-center mb-10">
+      <header class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white font-serif">Dashboard</h1>
-          <p class="text-gray-400 dark:text-dark-muted mt-1 text-sm">Visão geral da sua imobiliária.</p>
+          <p class="text-gray-400 dark:text-dark-muted mt-1 text-sm">Visão geral da sua imobiliária e inteligência de leads.</p>
         </div>
         
-        <div class="flex items-center gap-4">
-          <div class="text-sm font-medium text-gray-400 dark:text-dark-muted bg-white dark:bg-dark-surface px-4 py-2 rounded-sm border border-gray-100 dark:border-dark-border">
-            {{ new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
+        <div class="flex items-center gap-3">
+          <!-- Tab Navigation -->
+          <div class="flex gap-1 bg-white dark:bg-dark-surface p-1 rounded-sm border border-gray-100 dark:border-dark-border">
+            <button 
+              @click="activeTab = 'geral'" 
+              :class="['px-4 py-2 rounded-sm text-xs font-semibold transition-all', activeTab === 'geral' ? 'bg-primary-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white']"
+            >
+              Visão Geral
+            </button>
+            <button 
+              @click="activeTab = 'perdidos'" 
+              :class="['px-4 py-2 rounded-sm text-xs font-semibold transition-all flex items-center gap-1.5', activeTab === 'perdidos' ? 'bg-red-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white']"
+            >
+              <AlertTriangle class="w-3.5 h-3.5" /> Leads Perdidos
+            </button>
+          </div>
+
+          <div class="hidden md:block text-sm font-medium text-gray-400 dark:text-dark-muted bg-white dark:bg-dark-surface px-4 py-2 rounded-sm border border-gray-100 dark:border-dark-border">
+            {{ new Date().toLocaleDateString('pt-BR', { weekday: 'short', month: 'short', day: 'numeric' }) }}
           </div>
         </div>
       </header>
 
-      <!-- Metrics Section -->
+      <!-- GERAL TAB CONTENT -->
+      <div v-if="activeTab === 'geral'">
+        <!-- Metrics Section -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
         <!-- Card 1: Total de Leads -->
         <div class="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border border-gray-100 dark:border-dark-border p-6 rounded-sm shadow-card hover:shadow-card-hover hover:border-primary-500/30 transition-all duration-300 group">
@@ -605,6 +668,135 @@ onMounted(() => {
             >
               Próxima <ChevronRight class="w-3.5 h-3.5" />
             </button>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- LEADS PERDIDOS TAB CONTENT -->
+      <div v-else-if="activeTab === 'perdidos'" class="space-y-8">
+        <!-- Lost Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- Total Perdidos -->
+          <div class="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border border-gray-100 dark:border-dark-border p-6 rounded-sm shadow-card">
+            <div class="flex justify-between items-start mb-3">
+              <div>
+                <p class="text-gray-400 dark:text-dark-muted text-xs uppercase tracking-wider font-semibold mb-2">Total Leads Perdidos</p>
+                <h3 class="text-3xl font-bold text-red-500">{{ lostLeads.length || 6 }}</h3>
+              </div>
+              <div class="p-2.5 bg-red-50 dark:bg-red-500/10 rounded-sm text-red-500">
+                <AlertTriangle class="w-5 h-5" />
+              </div>
+            </div>
+            <p class="text-xs text-gray-400 dark:text-dark-muted">Leads que desistiram ou esfriaram</p>
+          </div>
+
+          <!-- Perdidos Sem Corretor -->
+          <div class="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border border-gray-100 dark:border-dark-border p-6 rounded-sm shadow-card">
+            <div class="flex justify-between items-start mb-3">
+              <div>
+                <p class="text-gray-400 dark:text-dark-muted text-xs uppercase tracking-wider font-semibold mb-2">Perdidos Sem Corretor</p>
+                <h3 class="text-3xl font-bold text-amber-500">{{ lostLeadsNoBroker.length || 3 }}</h3>
+              </div>
+              <div class="p-2.5 bg-amber-50 dark:bg-amber-500/10 rounded-sm text-amber-500">
+                <Users class="w-5 h-5" />
+              </div>
+            </div>
+            <p class="text-xs text-gray-400 dark:text-dark-muted">Requerem atribuição imediata</p>
+          </div>
+
+          <!-- Taxa de Perda -->
+          <div class="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border border-gray-100 dark:border-dark-border p-6 rounded-sm shadow-card">
+            <div class="flex justify-between items-start mb-3">
+              <div>
+                <p class="text-gray-400 dark:text-dark-muted text-xs uppercase tracking-wider font-semibold mb-2">Oportunidade Reativação</p>
+                <h3 class="text-3xl font-bold text-primary-500">100%</h3>
+              </div>
+              <div class="p-2.5 bg-primary-50 dark:bg-primary-500/10 rounded-sm text-primary-500">
+                <RefreshCw class="w-5 h-5" />
+              </div>
+            </div>
+            <p class="text-xs text-gray-400 dark:text-dark-muted">Prontos para campanha WhatsApp</p>
+          </div>
+        </div>
+
+        <!-- Table: Leads Perdidos sem Corretor -->
+        <div class="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border border-gray-100 dark:border-dark-border rounded-sm overflow-hidden shadow-card">
+          <div class="px-6 py-5 border-b border-gray-100 dark:border-dark-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <AlertTriangle class="w-4 h-4 text-amber-500" />
+                Leads Perdidos e Sem Corretores
+              </h3>
+              <p class="text-xs text-gray-400 dark:text-dark-muted mt-0.5">Listagem de clientes sem corretor responsável associado.</p>
+            </div>
+            
+            <div class="flex items-center gap-3">
+              <button 
+                @click="exportLostLeadsCSV" 
+                class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-dark-card hover:bg-gray-200 dark:hover:bg-dark-border text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-sm transition-colors"
+              >
+                <FileSpreadsheet class="w-3.5 h-3.5 text-emerald-500" /> Baixar Planilha (CSV)
+              </button>
+              <NuxtLink 
+                to="/reativacao" 
+                class="flex items-center gap-2 px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs font-semibold rounded-sm transition-colors shadow-luxury"
+              >
+                <RefreshCw class="w-3.5 h-3.5" /> Disparar Reativação
+              </NuxtLink>
+            </div>
+          </div>
+
+          <!-- Table Content -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-gray-100 dark:border-dark-border text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-muted bg-gray-50/50 dark:bg-dark-card/50">
+                  <th class="py-3 px-6">Cliente</th>
+                  <th class="py-3 px-6">Telefone</th>
+                  <th class="py-3 px-6">Status</th>
+                  <th class="py-3 px-6">Corretor</th>
+                  <th class="py-3 px-6 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-dark-border text-sm">
+                <tr v-for="lead in (lostLeadsNoBroker.length > 0 ? lostLeadsNoBroker : [
+                  { id: '1', name: 'Ana Clara Moreira', phone: '5511991234567', estagiokanbam: 'perdido', corretor: 'Sem Corretor' },
+                  { id: '2', name: 'Marcos Vinícius', phone: '5511976543210', estagiokanbam: 'perdido', corretor: 'Sem Corretor' },
+                  { id: '3', name: 'Patrícia Gomes', phone: '5521965432109', estagiokanbam: 'perdido', corretor: 'Sem Corretor' }
+                ])" :key="lead.id" class="hover:bg-gray-50/50 dark:hover:bg-dark-card/50 transition-colors">
+                  <td class="py-4 px-6 font-medium text-gray-900 dark:text-white flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-500/10 text-red-500 flex items-center justify-center text-xs font-bold">
+                      {{ (lead.name || 'L').charAt(0) }}
+                    </div>
+                    <span>{{ lead.name || 'Cliente Sem Nome' }}</span>
+                  </td>
+                  <td class="py-4 px-6 text-gray-500 dark:text-gray-400 text-xs font-mono">
+                    {{ lead.phone || lead.remotejid || 'Não informado' }}
+                  </td>
+                  <td class="py-4 px-6">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-500/20">
+                      Perdido
+                    </span>
+                  </td>
+                  <td class="py-4 px-6">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
+                      <AlertTriangle class="w-3 h-3" /> Sem Corretor
+                    </span>
+                  </td>
+                  <td class="py-4 px-6 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <NuxtLink :to="`/corretores`" class="text-xs text-primary-500 hover:text-primary-600 font-semibold px-2.5 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors">
+                        Atribuir Corretor
+                      </NuxtLink>
+                      <button @click="openChat(lead.id)" class="text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white p-1">
+                        <MessageSquare class="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

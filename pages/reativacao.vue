@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { 
   RefreshCw, Upload, Settings, Zap, Calendar, 
   FileText, Users, Send, CheckCircle2, Clock,
-  ChevronRight, AlertTriangle, Sparkles
+  ChevronRight, AlertTriangle, Sparkles, DollarSign
 } from 'lucide-vue-next'
 
 const { mainMargin } = useSidebarState()
@@ -17,6 +17,11 @@ const selectedLeads = ref<string[]>([])
 const selectAll = ref(false)
 const sending = ref(false)
 const sendComplete = ref(false)
+
+// Estimativa de Custos (API Oficial WhatsApp / Meta Cloud API)
+const costPerTemplate = ref(0.32) // R$ por mensagem/janela de 24h Meta Brasil
+const estimatedTargetCount = computed(() => selectedLeads.value.length > 0 ? selectedLeads.value.length : inactiveLeads.value.length)
+const totalEstimatedCost = computed(() => (estimatedTargetCount.value * costPerTemplate.value).toFixed(2))
 
 // Follow-up config
 const followupEnabled = ref(true)
@@ -219,6 +224,33 @@ function getStatusLabel(status: string) {
                 <span class="font-bold" :class="followupEnabled ? 'text-primary-500' : 'text-gray-400'">{{ followupEnabled ? 'Ativo' : 'Desligado' }}</span>
               </div>
             </div>
+          </div>
+
+          <!-- Calculadora de Custos API Oficial -->
+          <div class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl p-5 border-l-4 border-l-emerald-500">
+            <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+              <DollarSign class="w-4 h-4 text-emerald-500" /> Custo Disparo API Oficial (Meta)
+            </h3>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-3">
+              Estimativa de custos para envio via API Oficial do WhatsApp Business (Meta Cloud API / Janela 24h).
+            </p>
+            <div class="space-y-2 text-xs bg-gray-50 dark:bg-dark-card p-3 rounded-lg border border-gray-100 dark:border-dark-border">
+              <div class="flex justify-between">
+                <span class="text-gray-500 dark:text-gray-400">Leads a atingir:</span>
+                <span class="font-bold text-gray-900 dark:text-white">{{ estimatedTargetCount }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 dark:text-gray-400">Custo unitário (Marketing):</span>
+                <span class="font-bold text-gray-900 dark:text-white">R$ 0,32 / conversa</span>
+              </div>
+              <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10 font-bold text-sm">
+                <span class="text-gray-900 dark:text-white">Investimento Total:</span>
+                <span class="text-emerald-500 font-mono">R$ {{ totalEstimatedCost }}</span>
+              </div>
+            </div>
+            <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-2 italic">
+              ℹ️ Verificar aprovação de template e parâmetros com o Matheus antes de iniciar a campanha.
+            </p>
           </div>
 
           <!-- Send Button -->

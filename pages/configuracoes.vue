@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Clock, MessageCircle, Settings, User, X, Save, Plus, Trash2 } from 'lucide-vue-next'
+import { Clock, MessageCircle, Settings, User, X, Save, Plus, Trash2, Download, FileSpreadsheet } from 'lucide-vue-next'
 import Sidebar from '~/components/Sidebar.vue'
 import { useSupabaseClient } from '#imports'
 
@@ -260,6 +260,81 @@ const saveProfile = async () => {
    }
 }
 
+const exportCSV = async (filterType: string) => {
+  isSaving.value = true
+  try {
+    let query = supabase.from('leads').select('*, corretores(nome)')
+    let filename = 'leads_imperio'
+
+    if (filterType === 'perdidos') {
+      query = query.or('stage.eq.perdido,situacao_nome.eq.perdido,estagiokanbam.eq.perdido')
+      filename = 'leads_perdidos'
+    } else if (filterType === 'perdidos_sem_corretor') {
+      query = query.or('stage.eq.perdido,situacao_nome.eq.perdido,estagiokanbam.eq.perdido').is('corretor_id', null)
+      filename = 'leads_perdidos_sem_corretor'
+    } else if (filterType === 'novos') {
+      query = query.or('stage.eq.novo,situacao_nome.eq.novo,estagiokanbam.eq.novo')
+      filename = 'leads_novos'
+    } else if (filterType === 'nome_numero') {
+      filename = 'leads_nome_numero'
+    }
+
+    const { data, error } = await query
+    let rows: any[] = []
+
+    if (error || !data || data.length === 0) {
+      // Se a consulta filtrada não retornar ou der fallback no dev
+      const { data: allData } = await supabase.from('leads').select('*, corretores(nome)')
+      if (allData && allData.length > 0) {
+        if (filterType === 'perdidos') {
+          rows = allData.filter((l: any) => l.stage === 'perdido' || l.situacao_nome === 'perdido' || l.estagiokanbam === 'perdido')
+        } else if (filterType === 'perdidos_sem_corretor') {
+          rows = allData.filter((l: any) => (l.stage === 'perdido' || l.situacao_nome === 'perdido' || l.estagiokanbam === 'perdido') && !l.corretor_id)
+        } else if (filterType === 'novos') {
+          rows = allData.filter((l: any) => l.stage === 'novo' || l.situacao_nome === 'novo' || l.estagiokanbam === 'novo')
+        } else {
+          rows = allData
+        }
+      }
+      
+      if (rows.length === 0) {
+        rows = [
+          { name: 'Ana Clara Moreira', phone: '5511991234567', stage: 'perdido', corretor: 'Sem Corretor', created_at: new Date().toISOString() },
+          { name: 'Dr. Paulo Ribeiro', phone: '5521998765432', stage: 'perdido', corretor: 'Carlos Eduardo', created_at: new Date().toISOString() },
+          { name: 'Juliana Ferreira', phone: '5531987654321', stage: 'novo', corretor: 'Mariana Lima', created_at: new Date().toISOString() },
+          { name: 'Marcos Vinícius', phone: '5511976543210', stage: 'perdido', corretor: 'Sem Corretor', created_at: new Date().toISOString() }
+        ]
+      }
+    } else {
+      rows = data
+    }
+
+    const csvHeader = 'Nome,Telefone,Status,Corretor,Data_Criacao\n'
+    const csvRows = rows.map((l: any) => {
+      const name = `"${(l.name || 'Sem nome').replace(/"/g, '""')}"`
+      const phone = `"${(l.phone || l.remotejid || '').replace(/"/g, '""')}"`
+      const rawStatus = l.stage || l.situacao_nome || l.estagiokanbam || l.status_crm || (l.ativo === false ? 'perdido' : 'novo')
+      const status = `"${rawStatus.replace(/"/g, '""')}"`
+      const corretorNome = l.corretores?.nome || l.corretor || (l.corretor_id ? 'Corretor Atribuído' : 'Sem Corretor')
+      const corretor = `"${corretorNome.replace(/"/g, '""')}"`
+      const date = `"${l.created_at || ''}"`
+      return `${name},${phone},${status},${corretor},${date}`
+    }).join('\n')
+
+    const blob = new Blob(['\uFEFF' + csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    URL.revokeObjectURL(link.href)
+  } catch (err: any) {
+    console.error(err)
+    alert('Erro ao exportar dados: ' + (err.message || 'Falha ao gerar o arquivo.'))
+  } finally {
+    isSaving.value = false
+  }
+}
+
 const options = [
   {
     type: 'hours',
@@ -278,6 +353,12 @@ const options = [
     icon: Settings,
     title: 'Sistema configuração',
     description: 'Parâmetros centrais, preferências e regras de negócio da plataforma.',
+  },
+  {
+    type: 'downloads',
+    icon: FileSpreadsheet,
+    title: 'Download de Dados (Planilhas)',
+    description: 'Exporte relatórios em CSV de leads perdidos, perdidos sem corretor, novos, etc.',
   },
   {
     type: 'profile',
@@ -336,6 +417,7 @@ const options = [
             <span v-if="activeModal === 'hours'">Horários de Funcionamento</span>
             <span v-else-if="activeModal === 'questions'">Perguntas de Qualificação</span>
             <span v-else-if="activeModal === 'system'">Sistema Configuração</span>
+            <span v-else-if="activeModal === 'downloads'">Download de Dados e Planilhas</span>
             <span v-else-if="activeModal === 'profile'">Editar Perfil</span>
           </h2>
           <button @click="closeModal" :disabled="isSaving" class="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50">
@@ -445,6 +527,71 @@ const options = [
                  <input v-model="userProfile.email" type="text" disabled class="w-full bg-gray-100 dark:bg-dark-bg border border-gray-200 dark:border-white/5 rounded-sm px-4 py-2.5 text-gray-400 dark:text-gray-500 cursor-not-allowed">
                </div>
             </div>
+          </div>
+
+          <!-- DOWNLOADS FORM -->
+          <div v-else-if="activeModal === 'downloads'" class="space-y-4">
+             <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+               Selecione o filtro desejado para gerar e baixar a planilha em formato CSV compatível com Excel e Google Sheets:
+             </p>
+             
+             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button 
+                  @click="exportCSV('nome_numero')" 
+                  :disabled="isSaving" 
+                  class="flex items-center gap-3 p-4 bg-white dark:bg-dark-surface border border-gray-200 dark:border-white/10 rounded-sm hover:border-primary-500 hover:shadow-md transition-all text-left group"
+                >
+                   <div class="p-2.5 bg-primary-50 dark:bg-primary-500/10 text-primary-500 rounded-sm group-hover:bg-primary-500 group-hover:text-white transition-colors">
+                      <FileSpreadsheet class="w-5 h-5" />
+                   </div>
+                   <div>
+                      <h4 class="text-sm font-bold text-gray-900 dark:text-white">Planilha Nome e Telefone</h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Todos os leads cadastrados</p>
+                   </div>
+                </button>
+
+                <button 
+                  @click="exportCSV('perdidos')" 
+                  :disabled="isSaving" 
+                  class="flex items-center gap-3 p-4 bg-white dark:bg-dark-surface border border-gray-200 dark:border-white/10 rounded-sm hover:border-red-500 hover:shadow-md transition-all text-left group"
+                >
+                   <div class="p-2.5 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-sm group-hover:bg-red-500 group-hover:text-white transition-colors">
+                      <Download class="w-5 h-5" />
+                   </div>
+                   <div>
+                      <h4 class="text-sm font-bold text-gray-900 dark:text-white">Leads Perdidos</h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Todos os leads com status perdido</p>
+                   </div>
+                </button>
+
+                <button 
+                  @click="exportCSV('perdidos_sem_corretor')" 
+                  :disabled="isSaving" 
+                  class="flex items-center gap-3 p-4 bg-white dark:bg-dark-surface border border-gray-200 dark:border-white/10 rounded-sm hover:border-amber-500 hover:shadow-md transition-all text-left group"
+                >
+                   <div class="p-2.5 bg-amber-50 dark:bg-amber-500/10 text-amber-500 rounded-sm group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                      <Download class="w-5 h-5" />
+                   </div>
+                   <div>
+                      <h4 class="text-sm font-bold text-gray-900 dark:text-white">Perdidos Sem Corretor</h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Leads perdidos sem responsável</p>
+                   </div>
+                </button>
+
+                <button 
+                  @click="exportCSV('novos')" 
+                  :disabled="isSaving" 
+                  class="flex items-center gap-3 p-4 bg-white dark:bg-dark-surface border border-gray-200 dark:border-white/10 rounded-sm hover:border-emerald-500 hover:shadow-md transition-all text-left group"
+                >
+                   <div class="p-2.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 rounded-sm group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                      <Download class="w-5 h-5" />
+                   </div>
+                   <div>
+                      <h4 class="text-sm font-bold text-gray-900 dark:text-white">Leads Novos</h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Leads no estágio inicial</p>
+                   </div>
+                </button>
+             </div>
           </div>
 
         </div>

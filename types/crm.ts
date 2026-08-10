@@ -29,6 +29,7 @@ export interface Cliente {
     trava?: boolean;
     ultima_mensagem_at?: string | null;
     agent_active?: boolean | null;
+    situacao_nome?: string | null;
 }
 
 export interface Relatorio {

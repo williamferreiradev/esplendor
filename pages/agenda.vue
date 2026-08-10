@@ -2,10 +2,16 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSupabaseClient } from '#imports'
 import { 
-  CalendarDays, ChevronLeft, ChevronRight, Clock, User
+  CalendarDays, ChevronLeft, ChevronRight, Clock, User, Bot, Sparkles, MessageSquare
 } from 'lucide-vue-next'
 
 const { mainMargin } = useSidebarState()
+
+const notifyBrokerWhatsApp = (apt: any) => {
+  const text = `Olá Corretor! 🤖 A IA agendou uma visita para o lead *${apt.patient}*.\n\n📅 *Horário:* ${apt.hour}\n🏠 *Interesse/Imóvel:* ${apt.procedure}\n\nPor favor, confirme na sua agenda!`
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`
+  window.open(url, '_blank')
+}
 
 // Brokers (Corretores)
 // Appointment Statuses
@@ -142,7 +148,8 @@ const getAppointments = (dayDate: Date, hour: string) => {
       procedure: a.procedures?.name || a.about || 'Contato ou Consulta',
       hour: a.start_time ? a.start_time.substring(0, 5) : hour,
       duration: Math.max(1, duration),
-      status: a.status || 'agendado'
+      status: a.status || 'agendado',
+      is_ai: a.created_by_ia !== false
     }
   })
 }
@@ -282,9 +289,14 @@ const todayCount = computed(() => {
                 ]"
                 :style="{ minHeight: (apt.duration * 66 - 4) + 'px' }"
               >
-                <div class="flex items-center gap-1.5 mb-0.5 min-w-0">
-                  <div :class="['w-2 h-2 rounded-full flex-shrink-0 animate-pulse', getStatusTheme(apt.status).color]"></div>
-                  <span class="font-bold truncate">{{ apt.patient }}</span>
+                <div class="flex items-center justify-between gap-1 mb-0.5 min-w-0">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div :class="['w-2 h-2 rounded-full flex-shrink-0 animate-pulse', getStatusTheme(apt.status).color]"></div>
+                    <span class="font-bold truncate">{{ apt.patient }}</span>
+                  </div>
+                  <span v-if="apt.is_ai" class="inline-flex items-center gap-0.5 text-[8px] font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 px-1 rounded border border-primary-200 dark:border-primary-500/20 flex-shrink-0" title="Agendado automaticamente por IA">
+                    <Bot class="w-2.5 h-2.5" /> IA
+                  </span>
                 </div>
                 <p class="text-[10px] opacity-75 truncate w-full">{{ apt.procedure }}</p>
                 <div class="flex items-center gap-1 mt-auto opacity-60">
@@ -362,6 +374,17 @@ const todayCount = computed(() => {
                   <svg v-else class="h-4 w-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </div>
               </div>
+            </div>
+            
+            <!-- Notificar Corretor via WhatsApp -->
+            <div class="pt-2">
+              <button 
+                @click="notifyBrokerWhatsApp(selectedAppointment)" 
+                class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs rounded-xl transition-all shadow-sm group"
+              >
+                <MessageSquare class="w-4 h-4 group-hover:scale-110 transition-transform" /> 
+                Notificar Corretor via WhatsApp
+              </button>
             </div>
             
           </div>

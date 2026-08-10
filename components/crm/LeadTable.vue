@@ -56,8 +56,8 @@ const statusConfig: Record<CrmStatus, { label: string; color: string }> = {
 
             <!-- Status -->
             <td class="px-6 py-4">
-              <span :class="['inline-flex items-center gap-2 px-3 py-1 rounded-sm text-xs font-medium', statusConfig[lead.estagiokanbam as CrmStatus]?.color || 'bg-gray-100 dark:bg-dark-card text-gray-500']">
-                {{ statusConfig[lead.estagiokanbam as CrmStatus]?.label || lead.estagiokanbam || 'Novo' }}
+              <span :class="['inline-flex items-center gap-2 px-3 py-1 rounded-sm text-xs font-medium', statusConfig[(lead.stage || lead.situacao_nome || lead.estagiokanbam) as CrmStatus]?.color || 'bg-gray-100 dark:bg-dark-card text-gray-500']">
+                {{ statusConfig[(lead.stage || lead.situacao_nome || lead.estagiokanbam) as CrmStatus]?.label || lead.stage || lead.situacao_nome || lead.estagiokanbam || 'Novo' }}
               </span>
             </td>
 
