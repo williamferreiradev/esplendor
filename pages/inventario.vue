@@ -135,7 +135,7 @@ const handleSave = async () => {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`
       
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('img')
+        .from('imgs')
         .upload(`uploads/${fileName}`, selectedFile.value, {
            cacheControl: '3600',
            upsert: false
@@ -144,7 +144,7 @@ const handleSave = async () => {
       if (uploadError) throw uploadError
       
       // Coletar URL pública
-      const { data: publicUrlData } = supabase.storage.from('img').getPublicUrl(uploadData.path)
+      const { data: publicUrlData } = supabase.storage.from('imgs').getPublicUrl(uploadData.path)
       finalImageUrl = publicUrlData.publicUrl
     }
 

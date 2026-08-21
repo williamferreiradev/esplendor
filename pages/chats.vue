@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useSupabaseClient } from '#imports'
 import { MessageSquare, Phone, Search, FileText, Menu, X, BotOff, Bot, PhoneForwarded } from 'lucide-vue-next'
 
@@ -16,6 +16,29 @@ const messagesLoading = ref(false)
 const searchQuery = ref('')
 const isSidebarOpen = ref(false)
 const messagesContainer = ref<HTMLElement | null>(null)
+
+// Filtragem de conversas por nome, telefone (com ou sem formatação) e mensagem
+const filteredChats = computed(() => {
+  if (!searchQuery.value.trim()) return chats.value
+
+  const q = searchQuery.value.toLowerCase().trim()
+  const qDigits = q.replace(/\D/g, '')
+
+  return chats.value.filter(chat => {
+    const name = (chat.name || '').toLowerCase()
+    const phone = (chat.phone || '')
+    const phoneLower = phone.toLowerCase()
+    const phoneDigits = phone.replace(/\D/g, '')
+    const lastMsg = (chat.lastMessage || '').toLowerCase()
+
+    const nameMatch = name.includes(q)
+    const phoneMatch = phoneLower.includes(q)
+    const phoneDigitsMatch = qDigits.length > 0 && phoneDigits.includes(qDigits)
+    const lastMsgMatch = lastMsg.includes(q)
+
+    return nameMatch || phoneMatch || phoneDigitsMatch || lastMsgMatch
+  })
+})
 
 const stages = ref<any[]>([
   { id: 1, estagio: 'novo', estagio_name: 'Novo Contato' },
@@ -440,11 +463,11 @@ onUnmounted(() => {
         <div v-if="loading" class="p-8 text-center text-gray-400 dark:text-dark-muted text-sm">
           Carregando...
         </div>
-        <div v-else-if="chats.length === 0" class="p-8 text-center text-gray-400 dark:text-dark-muted text-sm">
+        <div v-else-if="filteredChats.length === 0" class="p-8 text-center text-gray-400 dark:text-dark-muted text-sm">
           Nenhuma conversa encontrada.
         </div>
         <button
-          v-for="chat in chats"
+          v-for="chat in filteredChats"
           :key="chat.id"
           @click="selectChat(chat)"
           :class="[

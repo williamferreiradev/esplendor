@@ -264,7 +264,7 @@ const exportCSV = async (filterType: string) => {
   isSaving.value = true
   try {
     let query = supabase.from('leads').select('*, corretores(nome)')
-    let filename = 'leads_imperio'
+    let filename = 'leads_esplendor'
 
     if (filterType === 'perdidos') {
       query = query.or('stage.eq.perdido,situacao_nome.eq.perdido,estagiokanbam.eq.perdido')

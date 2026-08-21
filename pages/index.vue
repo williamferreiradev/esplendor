@@ -1,12 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-
-onMounted(() => {
-  router.push('/login')
-})
+navigateTo('/dashboard', { replace: true })
 </script>
 
 <template>

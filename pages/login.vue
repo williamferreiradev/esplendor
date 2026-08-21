@@ -3,7 +3,7 @@
     <!-- Right Side - Branding (Real Estate Layout) -->
     <div class="hidden lg:flex lg:w-1/2 relative bg-gray-50 overflow-hidden order-last">
       <!-- Background Image - Use property/house image (user needs to change this locally) -->
-      <img src="/images/login-bg.png" alt="Império Imóveis CRM" class="absolute inset-0 w-full h-full object-cover object-center mix-blend-multiply opacity-30 grayscale-[50%]" />
+      <img src="/images/login-bg.png" alt="Esplendor Imóveis CRM" class="absolute inset-0 w-full h-full object-cover object-center mix-blend-multiply opacity-30 grayscale-[50%]" />
       
       <!-- Overlay Gradient - Blue & Yellow aesthetic -->
       <div class="absolute inset-0 bg-gradient-to-tr from-primary-900/90 via-primary-700/80 to-transparent mix-blend-multiply pointer-events-none"></div>
@@ -16,9 +16,9 @@
       <div class="relative z-10 w-full p-12 flex flex-col justify-between h-full items-end text-right">
         <div>
           <h1 class="text-4xl lg:text-5xl font-black text-white tracking-widest uppercase drop-shadow-md">
-            IMPÉRIO<span class="text-accent">IMÓVEIS</span>
+            ESPLENDOR<span class="text-accent ml-2">IMÓVEIS</span>
           </h1>
-          <div class="h-1.5 w-32 bg-primary-500 mt-4 rounded-full shadow-[0_0_15px_rgba(0,83,155,0.8)] ml-auto"></div>
+          <div class="h-1.5 w-32 bg-accent mt-4 rounded-full shadow-[0_0_15px_rgba(200,162,97,0.8)] ml-auto"></div>
         </div>
 
         <div class="space-y-4">
@@ -45,10 +45,10 @@
         <!-- Header -->
         <div class="text-center space-y-2 mb-10">
           <div class="w-16 h-16 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-primary-100">
-             <span class="text-primary-600 font-bold text-3xl">I</span>
+             <span class="text-primary-600 font-bold text-3xl">E</span>
           </div>
           <h2 class="text-3xl font-black text-gray-900 tracking-tight uppercase">Bem-vindo(a)</h2>
-          <p class="text-gray-500 font-medium">Acesse o CRM do Império Imóveis</p>
+          <p class="text-gray-500 font-medium">Acesse o CRM da Esplendor Imóveis</p>
         </div>
 
         <!-- Form -->
@@ -57,7 +57,7 @@
             <BaseInput 
               v-model="form.email"
               label="E-mail do Corretor"
-              placeholder="corretor@imperioimoveis.com.br"
+              placeholder="corretor@esplendorimoveis.com.br"
               type="email"
               :disabled="loading"
             />
@@ -88,15 +88,22 @@
 </template>
 
 <script setup lang="ts">
-import { useSupabaseClient } from '#imports'
+import { useSupabaseClient, useSupabaseUser } from '#imports'
+import { reactive, ref, watch } from 'vue'
 
-// Setup page layout (opcional para esconder navbar geral)
 definePageMeta({
   layout: false
 })
 
-const router = useRouter()
 const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+
+// Se já estiver logado, redireciona diretamente ao painel
+watch(user, (currentUser) => {
+  if (currentUser) {
+    navigateTo('/dashboard', { replace: true })
+  }
+}, { immediate: true })
 
 const form = reactive({
   email: '',
@@ -116,7 +123,7 @@ const handleLogin = async () => {
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: form.email,
+      email: form.email.trim(),
       password: form.password
     })
 
@@ -125,10 +132,7 @@ const handleLogin = async () => {
     feedback.type = 'success'
     feedback.message = 'Acesso liberado! Carregando painel...'
     
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 1000)
-    
+    await navigateTo('/dashboard', { replace: true })
   } catch (e: any) {
     feedback.type = 'error'
     feedback.message = e.message || 'Credenciais inválidas. Tente novamente.'

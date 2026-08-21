@@ -18,10 +18,10 @@ const redirectInfo = useSupabaseCookieRedirect()
 watch(user, () => {
   if (user.value) {
     let path = redirectInfo.pluck()
-    if (path && (path.startsWith('/_nuxt') || path.includes('.') || path.startsWith('/api'))) {
-      path = '/'
+    if (!path || path === '/' || path.startsWith('/_nuxt') || path.includes('.') || path.startsWith('/api') || path === '/login') {
+      path = '/dashboard'
     }
-    navigateTo(path || '/')
+    navigateTo(path, { replace: true })
   }
 }, { immediate: true })
 </script>
