@@ -16,7 +16,8 @@ import {
   Globe, 
   Settings, 
   CalendarDays, 
-  Clock 
+  Clock,
+  FileCheck 
 } from 'lucide-vue-next'
 
 const { isCollapsed, toggleSidebar } = useSidebarState()
@@ -25,6 +26,7 @@ const currentUser = useSupabaseUser()
 
 const leadsCount = ref(0)
 const semCorretorCount = ref(0)
+const statusDocCount = ref(0)
 const clinicId = ref<string | null>(null)
 let realtimeChannel: any
 
@@ -45,6 +47,15 @@ const fetchLeadsCount = async () => {
 
     if (!unassignedError && unassignedCount !== null) {
       semCorretorCount.value = unassignedCount
+    }
+
+    const { count: docPendingCount, error: docPendingError } = await supabase
+      .from('leads')
+      .select('*', { count: 'exact', head: true })
+      .eq('statusdoc', 'esperando')
+
+    if (!docPendingError && docPendingCount !== null) {
+      statusDocCount.value = docPendingCount
     }
   } catch (err) {
     console.error('Error fetching leads count:', err)
@@ -93,6 +104,7 @@ const navigation = computed(() => [
   { name: 'PRINCIPAL', items: [
     { name: 'Dashboard', icon: LayoutDashboard, route: '/dashboard' },
     { name: 'Negociações', icon: KanbanSquare, route: '/crm', badge: leadsCount.value > 0 ? String(leadsCount.value) : undefined },
+    { name: 'Status Documental', icon: FileCheck, route: '/documentos', badge: statusDocCount.value > 0 ? String(statusDocCount.value) : undefined },
     { name: 'Contatos', icon: Users, route: '/contatos' },
     { name: 'Corretores', icon: UserCircle, route: '/corretores' },
     { name: 'Visitas', icon: CalendarDays, route: '/agenda' },

@@ -30,6 +30,39 @@ export interface Cliente {
     ultima_mensagem_at?: string | null;
     agent_active?: boolean | null;
     situacao_nome?: string | null;
+    source?: string | null;
+    expected_value?: number | null;
+    ativo?: boolean | null;
+    corretor_id?: string | null;
+    tipo_imovel?: string | null;
+    localizacao?: string | null;
+    profissao?: string | null;
+    tempo_trabalho?: string | null;
+    renda_mensal?: number | null;
+    tipo_renda?: string | null;
+    doc_cpf?: boolean | null;
+    doc_rg?: boolean | null;
+    doc_certidao?: boolean | null;
+    doc_residencia?: boolean | null;
+    doc_carteira_trabalho?: boolean | null;
+    doc_contracheque?: boolean | null;
+    doc_movimentacao?: boolean | null;
+    url_cpf?: string | null;
+    url_rg?: string | null;
+    url_certidao?: string | null;
+    url_residencia?: string | null;
+    url_contracheque?: string | null;
+    url_carteira_trabalho?: string | null;
+    url_movimentacao?: string | null;
+    dataHandoff?: string | null;
+    estado_civil?: string | null;
+    endereco_atual?: string | null;
+    last_followup_status?: string | null;
+    last_mensagem_followup_at?: string | null;
+    email?: string | null;
+    statusdoc?: 'aguardando' | 'esperando' | 'aprovado' | 'rejeitado' | string | null;
+    motivostatus?: string | null;
+    cpf?: string | null;
 }
 
 export interface Relatorio {

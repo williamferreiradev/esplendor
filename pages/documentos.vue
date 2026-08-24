@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { 
-  Clock, 
+  FileCheck, 
   Search, 
   Download, 
   Eye, 
@@ -13,10 +13,16 @@ import {
   UserX,
   X,
   Building,
-  Filter
+  Filter,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  AlertCircle,
+  CreditCard,
+  DollarSign
 } from 'lucide-vue-next'
 import LeadDetailsModal from '@/components/leads/LeadDetailsModal.vue'
-import type { Cliente, CrmStatus } from '@/types/crm'
+import type { Cliente } from '@/types/crm'
 import { useSupabaseClient } from '#imports'
 
 const { mainMargin } = useSidebarState()
@@ -32,130 +38,104 @@ const selectedLead = ref<Cliente | null>(null)
 
 // Filters & Search
 const searchText = ref('')
-const selectedStage = ref<string>('todos')
+const selectedStatusDoc = ref<string>('todos')
 const currentPage = ref(1)
 const itemsPerPage = 15
 
-// Fetch Data: all leads without broker (corretor_id is null)
+// Fetch Data: all leads
 const fetchLeads = async () => {
   loading.value = true
   error.value = null
   
   try {
-    const { data: stagesData, error: stagesError } = await supabase
+    const { data: stagesData } = await supabase
       .from('stage')
       .select('*')
       .order('id')
-      
-    if (stagesError) throw stagesError
     stages.value = stagesData || []
 
     const { data: leadsData, error: leadsError } = await supabase
       .from('leads')
       .select('*')
-      .is('corretor_id', null)
       .order('created_at', { ascending: false })
       
     if (leadsError) throw leadsError
     leads.value = leadsData || []
   } catch (err: any) {
-    console.error('Erro ao buscar leads em espera:', err)
+    console.error('Erro ao buscar leads para status documental:', err)
     error.value = err.message || err
   } finally {
     loading.value = false
   }
 }
 
-// Stage Helpers
-const getStageName = (stageSlug?: string | null, stageId?: number | null) => {
-  if (!stageSlug && !stageId) return 'Novo'
-  const found = stages.value.find((s: any) => s.estagio === stageSlug || s.id === stageId)
-  if (found) return found.estagio_name || found.descricao || found.estagio
-  const map: Record<string, string> = {
-    novo: 'Novo',
-    em_atendimento: 'Em Atendimento',
-    negociacao: 'Negociação',
-    visita: 'Visita',
-    fechado: 'Fechado',
-    perdido: 'Perdido',
-    qualificando: 'Qualificando',
-    qualificado: 'Qualificado',
-    agendado: 'Visita',
-    convertido: 'Fechado'
-  }
-  return map[stageSlug || ''] || stageSlug || 'Novo'
+// Normalização do status documental (se null/undefined, considera 'aguardando')
+const normalizeDocStatus = (status?: string | null) => {
+  if (!status) return 'aguardando'
+  const s = status.toLowerCase().trim()
+  if (s === 'aprovado') return 'aprovado'
+  if (s === 'rejeitado') return 'rejeitado'
+  if (s === 'esperando') return 'esperando'
+  return 'aguardando'
 }
 
-const getStageBadgeClass = (stageSlug?: string | null, stageId?: number | null) => {
-  const s = stageSlug || stages.value.find((st: any) => st.id === stageId)?.estagio || 'novo'
-  switch (s) {
-    case 'novo':
-      return 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20'
-    case 'em_atendimento':
-    case 'qualificando':
-    case 'em_contato':
-      return 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20'
-    case 'negociacao':
-    case 'qualificado':
-      return 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20'
-    case 'visita':
-    case 'agendado':
-      return 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
-    case 'fechado':
-    case 'convertido':
-      return 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-500/20'
-    case 'perdido':
-      return 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20'
-    default:
-      return 'bg-gray-100 dark:bg-dark-card text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-dark-border'
+// Status Doc Counts computed for filter chips
+const docStatusCounts = computed(() => {
+  const counts: Record<string, number> = {
+    todos: leads.value.length,
+    aguardando: 0,
+    esperando: 0,
+    aprovado: 0,
+    rejeitado: 0
   }
-}
-
-// Stage counts computed for filter chips
-const stageCounts = computed(() => {
-  const counts: Record<string, number> = { todos: leads.value.length }
+  
   leads.value.forEach((l: any) => {
-    const st = l.stage || l.situacao_nome || 'novo'
+    const st = normalizeDocStatus(l.statusdoc)
     counts[st] = (counts[st] || 0) + 1
   })
+  
   return counts
 })
 
-// Unified Filtered Leads (Search + Stage Filter)
+// Unified Filtered Leads (Search + Document Status Filter)
 const filteredLeads = computed(() => {
   let result = [...leads.value]
 
-  // Stage filter
-  if (selectedStage.value !== 'todos') {
+  // Filter by statusdoc
+  if (selectedStatusDoc.value !== 'todos') {
     result = result.filter((l: any) => {
-      const st = l.stage || l.situacao_nome || 'novo'
-      return st === selectedStage.value || String(l.stage_id) === String(selectedStage.value)
+      return normalizeDocStatus(l.statusdoc) === selectedStatusDoc.value
     })
   }
 
-  // Unified Search Text (name, phone, email, about, property code, etc.)
+  // Filter by search text (name, phone, cpf, email, property code, etc.)
   if (searchText.value.trim()) {
     const query = searchText.value.toLowerCase().trim()
+    const queryCleanNumber = query.replace(/\D/g, '')
+
     result = result.filter((lead: any) => {
       const name = lead.name ? String(lead.name).toLowerCase() : ''
       const phone = lead.phone ? String(lead.phone).toLowerCase() : ''
-      const remotejid = lead.remotejid ? String(lead.remotejid).toLowerCase() : ''
+      const cpf = lead.cpf ? String(lead.cpf).toLowerCase() : ''
+      const cpfClean = lead.cpf ? String(lead.cpf).replace(/\D/g, '') : ''
       const email = lead.email ? String(lead.email).toLowerCase() : ''
       const about = lead.about ? String(lead.about).toLowerCase() : ''
       const tipoImovel = lead.tipo_imovel ? String(lead.tipo_imovel).toLowerCase() : ''
+      const profissao = lead.profissao ? String(lead.profissao).toLowerCase() : ''
       const localizacao = lead.localizacao ? String(lead.localizacao).toLowerCase() : ''
-      const situacao = lead.situacao_nome ? String(lead.situacao_nome).toLowerCase() : ''
       const propertyCode = lead.metadata?.propertyCode ? String(lead.metadata.propertyCode).toLowerCase() : ''
 
       return (
         name.includes(query) ||
         phone.includes(query) ||
-        remotejid.includes(query) ||
+        (queryCleanNumber && phone.includes(queryCleanNumber)) ||
+        cpf.includes(query) ||
+        (queryCleanNumber && cpfClean.includes(queryCleanNumber)) ||
         email.includes(query) ||
         about.includes(query) ||
         tipoImovel.includes(query) ||
+        profissao.includes(query) ||
         localizacao.includes(query) ||
-        situacao.includes(query) ||
         propertyCode.includes(query)
       )
     })
@@ -181,8 +161,8 @@ const visiblePages = computed(() => {
   return [1, '...', current - 1, current, current + 1, '...', total]
 })
 
-const handleStageSelect = (stageKey: string) => {
-  selectedStage.value = stageKey
+const handleStatusFilterSelect = (statusKey: string) => {
+  selectedStatusDoc.value = statusKey
   currentPage.value = 1
 }
 
@@ -191,7 +171,7 @@ const clearSearch = () => {
   currentPage.value = 1
 }
 
-// Actions & Modal Handlers
+// Modal Handlers
 const openLeadDetails = (lead: Cliente) => {
   selectedLead.value = lead
   showModal.value = true
@@ -201,34 +181,19 @@ const openChat = (leadId: string) => {
   navigateTo(`/chats?clientId=${leadId}`)
 }
 
-const handleStatusUpdate = async (id: string, newStage: any) => {
-  let stageObj = newStage
-  if (typeof newStage === 'string') {
-    stageObj = stages.value.find((s: any) => s.estagio === newStage)
-  }
-  
-  if (!stageObj) {
-    console.error('Stage não encontrado:', newStage)
-    return
-  }
-
+const handleStatusDocUpdate = (id: string, statusdoc: string, motivostatus?: string) => {
   const lead = leads.value.find((l: any) => l.id === id)
   if (lead) {
-    lead.stage_id = stageObj.id
-    lead.stage = stageObj.estagio
-  }
-
-  try {
-    const { error: updateError } = await supabase.from('leads').update({
-      stage_id: stageObj.id,
-      stage: stageObj.estagio
-    }).eq('id', id)
-    
-    if (updateError) {
-      console.error('Erro ao atualizar status:', updateError)
+    lead.statusdoc = statusdoc
+    if (motivostatus !== undefined) {
+      lead.motivostatus = motivostatus
     }
-  } catch (err) {
-    console.error('Erro ao atualizar status:', err)
+  }
+  if (selectedLead.value && selectedLead.value.id === id) {
+    selectedLead.value.statusdoc = statusdoc
+    if (motivostatus !== undefined) {
+      selectedLead.value.motivostatus = motivostatus
+    }
   }
 }
 
@@ -244,33 +209,44 @@ const handleNotesUpdate = async (id: string, notes: string) => {
   }
 }
 
-// Export CSV
-const downloadCSV = () => {
-  const columns = [
-    'id', 'name', 'phone', 'cpf', 'statusdoc', 'motivostatus', 'stage', 'agent_active', 'created_at', 'source', 'expected_value', 'about', 'ativo', 'stage_id', 'ultima_mensagem_at', 'corretor_id', 'tipo_imovel', 'localizacao', 'situacao_nome', 'profissao', 'tempo_trabalho', 'renda_mensal', 'tipo_renda', 'doc_cpf', 'doc_rg', 'doc_certidao', 'doc_residencia', 'doc_carteira_trabalho', 'doc_contracheque', 'doc_movimentacao', 'url_cpf', 'url_rg', 'url_certidao', 'url_residencia', 'url_contracheque', 'dataHandoff', 'estado_civil', 'endereco_atual', 'url_carteira_trabalho', 'url_movimentacao', 'last_followup_status', 'last_mensagem_followup_at'
-  ]
-
-  const escapeCSV = (value: any) => {
-    if (value === null || value === undefined) return '""'
-    const stringValue = String(value)
-    return '"' + stringValue.replace(/"/g, '""') + '"'
+// Status Badges Styling
+const getDocBadgeInfo = (status?: string | null) => {
+  const s = normalizeDocStatus(status)
+  switch (s) {
+    case 'aguardando':
+      return {
+        label: 'Aguardando',
+        classes: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20',
+        icon: Clock
+      }
+    case 'esperando':
+      return {
+        label: 'Esperando',
+        classes: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20',
+        icon: AlertCircle
+      }
+    case 'aprovado':
+      return {
+        label: 'Aprovado',
+        classes: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20',
+        icon: CheckCircle2
+      }
+    case 'rejeitado':
+      return {
+        label: 'Rejeitado',
+        classes: 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20',
+        icon: XCircle
+      }
+    default:
+      return {
+        label: s,
+        classes: 'bg-gray-100 dark:bg-dark-card text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-dark-border',
+        icon: Clock
+      }
   }
-
-  const header = columns.join(',') + "\r\n"
-  const rows = filteredLeads.value.map(lead => columns.map(col => escapeCSV(lead[col])).join(',')).join("\r\n")
-  const csvContent = "\uFEFF" + header + rows
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.setAttribute("href", url)
-  link.setAttribute("download", `leads_espera_${new Date().toISOString().split('T')[0]}.csv`)
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
 }
 
+// Formatters
 const formatPhone = (phone?: string | null, remotejid?: string | null) => {
   const raw = phone || remotejid || ''
   const clean = raw.replace('@c.us', '').replace(/\D/g, '')
@@ -293,6 +269,22 @@ const formatPhone = (phone?: string | null, remotejid?: string | null) => {
   return raw.replace('@c.us', '') || 'Sem telefone'
 }
 
+const formatCPF = (cpf?: string | null) => {
+  if (!cpf) return 'N/A'
+  const clean = cpf.replace(/\D/g, '')
+  if (clean.length === 11) {
+    return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+  }
+  return cpf
+}
+
+const formatCurrency = (val?: number | bigint | string | null) => {
+  if (val === null || val === undefined || val === '' || val === 0) return null
+  const num = Number(val)
+  if (isNaN(num)) return null
+  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+}
+
 const formatDate = (dateString?: string) => {
   if (!dateString) return ''
   return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -302,38 +294,54 @@ const formatDate = (dateString?: string) => {
   })
 }
 
+// Export CSV
+const downloadCSV = () => {
+  const columns = [
+    'id', 'name', 'phone', 'cpf', 'statusdoc', 'motivostatus', 'renda_mensal', 'tipo_renda', 'profissao', 'tempo_trabalho', 'estado_civil', 'endereco_atual', 'tipo_imovel', 'expected_value', 'stage', 'created_at', 'doc_cpf', 'doc_rg', 'doc_certidao', 'doc_residencia', 'doc_contracheque', 'doc_carteira_trabalho', 'doc_movimentacao', 'url_cpf', 'url_rg', 'url_certidao', 'url_residencia', 'url_contracheque', 'url_carteira_trabalho', 'url_movimentacao'
+  ]
+
+  const escapeCSV = (value: any) => {
+    if (value === null || value === undefined) return '""'
+    const stringValue = String(value)
+    return '"' + stringValue.replace(/"/g, '""') + '"'
+  }
+
+  const header = columns.join(',') + "\r\n"
+  const rows = filteredLeads.value.map(lead => columns.map(col => escapeCSV(lead[col])).join(',')).join("\r\n")
+  const csvContent = "\uFEFF" + header + rows
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.setAttribute("href", url)
+  link.setAttribute("download", `leads_status_documental_${new Date().toISOString().split('T')[0]}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
 // Realtime Subscription
 let realtimeChannel: any
 
 const setupRealtime = () => {
-  realtimeChannel = supabase.channel('semcorretor_leads_changes')
+  realtimeChannel = supabase.channel('statusdoc_leads_changes')
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'leads' },
       (payload: any) => {
         if (payload.eventType === 'INSERT') {
-          if (!payload.new.corretor_id) {
-            if (!leads.value.find((l: any) => l.id === payload.new.id)) {
-              leads.value.unshift(payload.new)
-            }
+          if (!leads.value.find((l: any) => l.id === payload.new.id)) {
+            leads.value.unshift(payload.new)
           }
         } else if (payload.eventType === 'UPDATE') {
           const idx = leads.value.findIndex((l: any) => l.id === payload.new.id)
-          if (payload.new.corretor_id) {
-            // Lead was assigned to a broker -> remove from "sem corretor" list
-            if (idx !== -1) {
-              leads.value.splice(idx, 1)
-              leads.value = [...leads.value]
-            }
+          if (idx !== -1) {
+            leads.value[idx] = { ...leads.value[idx], ...payload.new }
+            leads.value = [...leads.value]
           } else {
-            // Lead is still without a broker -> update in list
-            if (idx !== -1) {
-              leads.value[idx] = { ...leads.value[idx], ...payload.new }
-              leads.value = [...leads.value]
-            } else {
-              leads.value.unshift(payload.new)
-              leads.value = [...leads.value]
-            }
+            leads.value.unshift(payload.new)
+            leads.value = [...leads.value]
           }
         } else if (payload.eventType === 'DELETE') {
           leads.value = leads.value.filter((l: any) => l.id !== payload.old.id)
@@ -363,21 +371,22 @@ onUnmounted(() => {
     <pre v-if="error" class="fixed top-4 right-4 bg-red-50 text-red-600 dark:bg-red-900 dark:text-white p-4 rounded-xl z-50 max-w-md overflow-auto shadow-card">{{ error }}</pre>
 
     <main :class="[mainMargin, 'p-6 lg:p-10 h-screen overflow-hidden flex flex-col transition-all duration-300']">
+      
       <!-- Header -->
       <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div class="flex items-center gap-4">
           <div class="p-3 bg-primary-50 dark:bg-primary-500/10 rounded-xl text-primary-500 flex-shrink-0 shadow-sm">
-            <Clock class="w-6 h-6" />
+            <FileCheck class="w-6 h-6" />
           </div>
           <div>
             <h1 class="text-xl lg:text-2xl font-bold tracking-tight flex items-center gap-3">
-              Leads em Espera
+              Status Documental & Financiamento
               <span v-if="!loading" class="text-xs font-semibold text-primary-600 dark:text-primary-400 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-500/10 border border-primary-100 dark:border-primary-500/20">
-                {{ filteredLeads.length }} {{ filteredLeads.length === 1 ? 'interessado' : 'interessados' }}
+                {{ filteredLeads.length }} {{ filteredLeads.length === 1 ? 'lead' : 'leads' }}
               </span>
             </h1>
             <p class="text-gray-400 dark:text-dark-muted text-sm mt-0.5">
-              Todos os leads de todos os estágios que aguardam atribuição de corretor.
+              Gestão das etapas de documentação e aprovação de financiamento de todos os interessados.
             </p>
           </div>
         </div>
@@ -394,8 +403,9 @@ onUnmounted(() => {
         </div>
       </header>
 
-      <!-- Search and Stage Filters Bar -->
+      <!-- Search and Status Filters Bar -->
       <div class="flex flex-col gap-4 mb-6">
+        
         <!-- Top row: Search input -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div class="relative flex-1">
@@ -403,7 +413,7 @@ onUnmounted(() => {
             <input 
               v-model="searchText"
               type="text"
-              placeholder="Buscar por nome, telefone, e-mail, interesse ou código..."
+              placeholder="Buscar por nome, telefone, CPF, e-mail, profissão ou imóvel..."
               class="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all shadow-sm"
             />
             <button 
@@ -417,18 +427,18 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Stage Filter Chips -->
+        <!-- Document Status Filter Chips -->
         <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           <span class="text-xs font-semibold text-gray-400 dark:text-dark-muted uppercase tracking-wider mr-1 hidden sm:inline-flex items-center gap-1.5">
-            <Filter class="w-3.5 h-3.5" /> Estágios:
+            <Filter class="w-3.5 h-3.5" /> Status Doc:
           </span>
 
           <!-- Todos -->
           <button 
-            @click="handleStageSelect('todos')"
+            @click="handleStatusFilterSelect('todos')"
             :class="[
               'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border',
-              selectedStage === 'todos' 
+              selectedStatusDoc === 'todos' 
                 ? 'bg-primary-500 text-white border-primary-500 shadow-sm' 
                 : 'bg-white dark:bg-dark-surface text-gray-600 dark:text-gray-300 border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5'
             ]"
@@ -437,33 +447,98 @@ onUnmounted(() => {
             <span 
               :class="[
                 'text-[10px] px-1.5 py-0.2 rounded-full font-bold',
-                selectedStage === 'todos' ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-dark-card text-gray-500 dark:text-dark-muted'
+                selectedStatusDoc === 'todos' ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-dark-card text-gray-500 dark:text-dark-muted'
               ]"
             >
-              {{ stageCounts['todos'] || 0 }}
+              {{ docStatusCounts['todos'] || 0 }}
             </span>
           </button>
 
-          <!-- Stages from DB / Standard -->
+          <!-- Aguardando -->
           <button 
-            v-for="s in stages"
-            :key="s.id"
-            @click="handleStageSelect(s.estagio)"
+            @click="handleStatusFilterSelect('aguardando')"
             :class="[
               'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border',
-              selectedStage === s.estagio 
-                ? 'bg-primary-500 text-white border-primary-500 shadow-sm' 
+              selectedStatusDoc === 'aguardando' 
+                ? 'bg-amber-500 text-white border-amber-500 shadow-sm' 
                 : 'bg-white dark:bg-dark-surface text-gray-600 dark:text-gray-300 border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5'
             ]"
           >
-            <span>{{ s.estagio_name || s.descricao || getStageName(s.estagio, s.id) }}</span>
+            <Clock class="w-3.5 h-3.5" />
+            <span>Aguardando</span>
             <span 
               :class="[
                 'text-[10px] px-1.5 py-0.2 rounded-full font-bold',
-                selectedStage === s.estagio ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-dark-card text-gray-500 dark:text-dark-muted'
+                selectedStatusDoc === 'aguardando' ? 'bg-white/20 text-white' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400'
               ]"
             >
-              {{ stageCounts[s.estagio] || 0 }}
+              {{ docStatusCounts['aguardando'] || 0 }}
+            </span>
+          </button>
+
+          <!-- Esperando (Aprovação) -->
+          <button 
+            @click="handleStatusFilterSelect('esperando')"
+            :class="[
+              'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border',
+              selectedStatusDoc === 'esperando' 
+                ? 'bg-blue-600 text-white border-blue-600 shadow-sm' 
+                : 'bg-white dark:bg-dark-surface text-gray-600 dark:text-gray-300 border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5'
+            ]"
+          >
+            <AlertCircle class="w-3.5 h-3.5" />
+            <span>Esperando</span>
+            <span 
+              :class="[
+                'text-[10px] px-1.5 py-0.2 rounded-full font-bold',
+                selectedStatusDoc === 'esperando' ? 'bg-white/20 text-white' : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
+              ]"
+            >
+              {{ docStatusCounts['esperando'] || 0 }}
+            </span>
+          </button>
+
+          <!-- Aprovado -->
+          <button 
+            @click="handleStatusFilterSelect('aprovado')"
+            :class="[
+              'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border',
+              selectedStatusDoc === 'aprovado' 
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' 
+                : 'bg-white dark:bg-dark-surface text-gray-600 dark:text-gray-300 border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5'
+            ]"
+          >
+            <CheckCircle2 class="w-3.5 h-3.5" />
+            <span>Aprovado</span>
+            <span 
+              :class="[
+                'text-[10px] px-1.5 py-0.2 rounded-full font-bold',
+                selectedStatusDoc === 'aprovado' ? 'bg-white/20 text-white' : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+              ]"
+            >
+              {{ docStatusCounts['aprovado'] || 0 }}
+            </span>
+          </button>
+
+          <!-- Rejeitado -->
+          <button 
+            @click="handleStatusFilterSelect('rejeitado')"
+            :class="[
+              'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border',
+              selectedStatusDoc === 'rejeitado' 
+                ? 'bg-rose-600 text-white border-rose-600 shadow-sm' 
+                : 'bg-white dark:bg-dark-surface text-gray-600 dark:text-gray-300 border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5'
+            ]"
+          >
+            <XCircle class="w-3.5 h-3.5" />
+            <span>Rejeitado</span>
+            <span 
+              :class="[
+                'text-[10px] px-1.5 py-0.2 rounded-full font-bold',
+                selectedStatusDoc === 'rejeitado' ? 'bg-white/20 text-white' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'
+              ]"
+            >
+              {{ docStatusCounts['rejeitado'] || 0 }}
             </span>
           </button>
         </div>
@@ -475,7 +550,7 @@ onUnmounted(() => {
         <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-20 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-sm transition-colors duration-300">
           <div class="flex flex-col items-center gap-3">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-            <p class="text-xs text-gray-500 dark:text-dark-muted">Carregando leads em espera...</p>
+            <p class="text-xs text-gray-500 dark:text-dark-muted">Carregando status documental...</p>
           </div>
         </div>
 
@@ -487,27 +562,28 @@ onUnmounted(() => {
                 <tr class="border-b border-gray-100 dark:border-dark-border text-gray-400 dark:text-dark-muted text-xs uppercase tracking-wider bg-gray-50/90 dark:bg-dark-card/90 backdrop-blur-md">
                   <th class="px-6 py-4 font-semibold">Nome</th>
                   <th class="px-6 py-4 font-semibold">Telefone</th>
-                  <th class="px-6 py-4 font-semibold">Status (CRM)</th>
-                  <th class="px-6 py-4 font-semibold">Cód. Imóvel</th>
-                  <th class="px-6 py-4 font-semibold">Modo</th>
+                  <th class="px-6 py-4 font-semibold">CPF</th>
+                  <th class="px-6 py-4 font-semibold">Status Doc</th>
+                  <th class="px-6 py-4 font-semibold">Renda / Imóvel</th>
+                  <th class="px-6 py-4 font-semibold">Modo IA</th>
                   <th class="px-6 py-4 font-semibold text-right">Ações</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-50 dark:divide-dark-border text-sm">
                 <!-- Empty State -->
                 <tr v-if="!loading && filteredLeads.length === 0">
-                  <td colspan="6" class="py-16 text-center">
+                  <td colspan="7" class="py-16 text-center">
                     <div class="flex flex-col items-center justify-center max-w-sm mx-auto">
                       <div class="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-dark-card flex items-center justify-center text-gray-400 dark:text-dark-muted mb-4 border border-gray-200 dark:border-dark-border">
                         <UserX class="w-7 h-7" />
                       </div>
                       <h3 class="text-base font-bold text-gray-900 dark:text-white">Nenhum lead encontrado</h3>
                       <p class="text-xs text-gray-400 dark:text-dark-muted mt-1">
-                        {{ searchText ? 'Tente buscar com outros termos.' : 'Não há leads sem corretor atribuído neste momento.' }}
+                        {{ searchText ? 'Tente buscar com outros termos.' : 'Não há leads com este status no momento.' }}
                       </p>
                       <button 
-                        v-if="searchText || selectedStage !== 'todos'"
-                        @click="() => { clearSearch(); selectedStage = 'todos'; }"
+                        v-if="searchText || selectedStatusDoc !== 'todos'"
+                        @click="() => { clearSearch(); selectedStatusDoc = 'todos'; }"
                         class="mt-4 px-4 py-2 text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 rounded-lg hover:bg-primary-100 transition-colors"
                       >
                         Limpar Filtros
@@ -547,22 +623,37 @@ onUnmounted(() => {
                     </span>
                   </td>
 
-                  <!-- Status -->
+                  <!-- CPF -->
                   <td class="px-6 py-4">
-                    <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold', getStageBadgeClass(lead.stage || lead.situacao_nome, lead.stage_id)]">
-                      {{ getStageName(lead.stage || lead.situacao_nome, lead.stage_id) }}
-                    </span>
-                  </td>
-
-                  <!-- Código Imóvel -->
-                  <td class="px-6 py-4 text-xs text-gray-500 dark:text-dark-muted font-mono">
-                    <div class="flex items-center gap-1.5">
-                      <Building v-if="lead.tipo_imovel || lead.metadata?.propertyCode" class="w-3.5 h-3.5 text-gray-400" />
-                      <span>{{ lead.tipo_imovel || lead.metadata?.propertyCode || 'N/A' }}</span>
+                    <div class="flex items-center gap-1.5 text-xs font-mono text-gray-700 dark:text-gray-300 font-medium">
+                      <CreditCard class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                      <span>{{ formatCPF(lead.cpf) }}</span>
                     </div>
                   </td>
 
-                  <!-- Modo -->
+                  <!-- Status Documental -->
+                  <td class="px-6 py-4">
+                    <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold', getDocBadgeInfo(lead.statusdoc).classes]">
+                      <component :is="getDocBadgeInfo(lead.statusdoc).icon" class="w-3.5 h-3.5" />
+                      {{ getDocBadgeInfo(lead.statusdoc).label }}
+                    </span>
+                  </td>
+
+                  <!-- Renda / Imóvel -->
+                  <td class="px-6 py-4 text-xs text-gray-500 dark:text-dark-muted">
+                    <div class="space-y-0.5">
+                      <div v-if="formatCurrency(lead.renda_mensal)" class="font-semibold text-gray-900 dark:text-white flex items-center gap-1">
+                        <DollarSign class="w-3 h-3 text-emerald-500" />
+                        {{ formatCurrency(lead.renda_mensal) }}
+                      </div>
+                      <div class="flex items-center gap-1.5 text-gray-400">
+                        <Building v-if="lead.tipo_imovel" class="w-3 h-3" />
+                        <span class="truncate">{{ lead.tipo_imovel || 'Imóvel N/A' }}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Modo IA -->
                   <td class="px-6 py-4 text-xs">
                     <span v-if="lead.agent_active === false" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
                       <Lock class="w-3 h-3" /> Desativado
@@ -585,7 +676,7 @@ onUnmounted(() => {
                       <button 
                         @click="openLeadDetails(lead)"
                         class="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-all" 
-                        title="Ver Detalhes"
+                        title="Ver Detalhes e Documentos"
                       >
                         <Eye class="w-4 h-4" />
                       </button>
@@ -599,7 +690,7 @@ onUnmounted(() => {
           <!-- Pagination Footer -->
           <div v-if="filteredLeads.length > 0" class="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-3 border-t border-gray-100 dark:border-dark-border bg-gray-50/50 dark:bg-dark-card/50 text-xs text-gray-500 dark:text-dark-muted">
             <div>
-              Mostrando <span class="font-semibold text-gray-900 dark:text-white">{{ ((currentPage - 1) * itemsPerPage) + 1 }}</span> a <span class="font-semibold text-gray-900 dark:text-white">{{ Math.min(currentPage * itemsPerPage, filteredLeads.length) }}</span> de <span class="font-semibold text-gray-900 dark:text-white">{{ filteredLeads.length }}</span> leads sem corretor
+              Mostrando <span class="font-semibold text-gray-900 dark:text-white">{{ ((currentPage - 1) * itemsPerPage) + 1 }}</span> a <span class="font-semibold text-gray-900 dark:text-white">{{ Math.min(currentPage * itemsPerPage, filteredLeads.length) }}</span> de <span class="font-semibold text-gray-900 dark:text-white">{{ filteredLeads.length }}</span> leads
             </div>
 
             <div v-if="totalPages > 1" class="flex items-center gap-1">
@@ -643,13 +734,13 @@ onUnmounted(() => {
     </main>
   </div>
 
-  <!-- Lead Details Modal -->
+  <!-- Lead Details & Decision Modal -->
   <LeadDetailsModal
     :model-value="showModal"
     @update:model-value="showModal = $event"
     :lead="selectedLead"
     :stages="stages"
-    @update-status="handleStatusUpdate"
+    @update-statusdoc="handleStatusDocUpdate"
     @save-notes="handleNotesUpdate"
   />
 </template>
