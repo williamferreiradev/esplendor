@@ -2,8 +2,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSupabaseClient } from '#imports'
 import { 
-  CalendarDays, ChevronLeft, ChevronRight, Clock, User, Bot, Sparkles, MessageSquare
+  CalendarDays, ChevronLeft, ChevronRight, Clock, User, Bot, Sparkles, MessageSquare, Plus
 } from 'lucide-vue-next'
+import AgendaNewAppointmentModal from '@/components/agenda/NewAppointmentModal.vue'
 
 const { mainMargin } = useSidebarState()
 
@@ -28,6 +29,7 @@ const viewMode = ref<'week' | 'day'>('week')
 
 // Modal State
 const isModalOpen = ref(false)
+const isNewModalOpen = ref(false)
 const selectedAppointment = ref<any>(null)
 const updatingStatus = ref(false)
 
@@ -215,7 +217,7 @@ const todayCount = computed(() => {
 
         <div class="flex items-center gap-3">
           <!-- Status Legend -->
-          <div class="flex items-center gap-3 mr-4">
+          <div class="hidden lg:flex items-center gap-3 mr-2">
             <div v-for="st in statuses" :key="st.id" class="flex items-center gap-1.5">
               <div :class="['w-2.5 h-2.5 rounded-full', st.color]"></div>
               <span class="text-[11px] font-medium text-gray-500 dark:text-dark-muted">{{ st.label }}</span>
@@ -235,6 +237,15 @@ const todayCount = computed(() => {
               <ChevronRight class="w-4 h-4" />
             </button>
           </div>
+
+          <!-- Novo Agendamento Button -->
+          <button 
+            @click="isNewModalOpen = true"
+            class="flex items-center gap-2 px-3.5 py-1.5 bg-primary-500 hover:bg-primary-600 text-white font-semibold text-xs rounded-lg shadow-sm hover:shadow transition-all ml-1"
+          >
+            <Plus class="w-4 h-4" />
+            <span>Novo Agendamento</span>
+          </button>
         </div>
       </header>
 
@@ -391,6 +402,11 @@ const todayCount = computed(() => {
         </div>
       </div>
     </Transition>
+    <!-- New Appointment Modal -->
+    <AgendaNewAppointmentModal 
+      v-model="isNewModalOpen" 
+      @created="fetchAppointments" 
+    />
   </div>
 </template>
 
