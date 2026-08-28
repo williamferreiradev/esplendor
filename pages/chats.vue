@@ -120,6 +120,26 @@ const parseMessage = (msgObj: any) => {
   if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
     try {
       const parsed = JSON.parse(trimmed)
+
+      // O n8n/LangChain pode serializar um bloco de conteúdo dentro de
+      // message.content, por exemplo: { type: 'text', content: 'Olá' }.
+      // Esse formato é uma mensagem normal da IA, não uma saída de tool.
+      if (parsed?.type === 'text' && typeof parsed.content === 'string') {
+        return { text: parsed.content, isSystem: false, systemAction: '', type: 'text' }
+      }
+
+      // Também suporta o formato de content blocks usado por algumas
+      // versões do LangChain/OpenAI.
+      if (Array.isArray(parsed)) {
+        const contentBlocks = parsed
+          .filter(block => block?.type === 'text' && typeof block.content === 'string')
+          .map(block => block.content)
+
+        if (contentBlocks.length > 0) {
+          return { text: contentBlocks.join('\n'), isSystem: false, systemAction: '', type: 'text' }
+        }
+      }
+
       if (parsed.output && typeof parsed.output.content === 'string') {
          return { text: parsed.output.content, isSystem: false, systemAction: '', type: 'text' }
       }
