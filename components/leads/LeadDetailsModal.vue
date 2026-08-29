@@ -453,24 +453,24 @@ const handleSetPending = async () => {
     <Transition name="modal">
       <div 
         v-if="modelValue && lead" 
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4"
         @click.self="close"
       >
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-gray-900/50 dark:bg-black/85 backdrop-blur-sm"></div>
         
         <!-- Modal Card -->
-        <div class="relative bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl shadow-luxury max-w-2xl w-full max-h-[92vh] overflow-y-auto transition-all">
+        <div class="relative bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-t-2xl sm:rounded-2xl shadow-luxury max-w-2xl w-full max-h-[94dvh] sm:max-h-[92vh] overflow-y-auto transition-all">
           
           <!-- Header -->
           <div class="flex items-center justify-between p-5 sm:p-6 border-b border-gray-100 dark:border-dark-border sticky top-0 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md z-20">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 min-w-0">
               <div class="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center text-primary-500 shadow-sm">
                 <FileCheck class="w-5 h-5" />
               </div>
-              <div>
-                <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight">Detalhes do Interessado & Documentação</h2>
-                <p class="text-xs text-gray-400 dark:text-dark-muted">Informações cadastrais, documentos e status de financiamento</p>
+              <div class="min-w-0">
+                <h2 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-tight">Detalhes do Interessado & Documentação</h2>
+                <p class="hidden sm:block text-xs text-gray-400 dark:text-dark-muted">Informações cadastrais, documentos e status de financiamento</p>
               </div>
             </div>
             <button 
@@ -880,4 +880,3 @@ const handleSetPending = async () => {
   opacity: 0;
 }
 </style>
-

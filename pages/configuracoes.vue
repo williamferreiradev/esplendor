@@ -373,7 +373,7 @@ const options = [
   <div class="min-h-screen bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white font-sans transition-colors duration-300">
     <Sidebar />
 
-    <main :class="[mainMargin, 'p-10 min-h-screen flex flex-col transition-all duration-300 relative z-0']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-10 min-h-screen flex flex-col transition-all duration-300 relative z-0']">
       <!-- Header -->
       <div class="mb-10">
         <h1 class="text-3xl font-bold font-serif text-gray-900 dark:text-white tracking-wide">Configurações do Sistema</h1>
@@ -400,10 +400,10 @@ const options = [
     </main>
 
     <!-- Global Modal Overlay -->
-    <div v-if="activeModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div v-if="activeModal" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal"></div>
       
-      <div class="relative z-10 pointer-events-auto bg-white dark:bg-dark-card w-full max-w-2xl rounded-sm shadow-2xl border border-gray-200 dark:border-white/10 flex flex-col max-h-[90vh] overflow-hidden">
+      <div class="relative z-10 pointer-events-auto bg-white dark:bg-dark-card w-full max-w-2xl rounded-t-2xl sm:rounded-sm shadow-2xl border border-gray-200 dark:border-white/10 flex flex-col max-h-[94dvh] sm:max-h-[90vh] overflow-hidden">
         
         <!-- Modal Loading State -->
         <div v-if="isLoading" class="absolute inset-0 z-50 bg-white/80 dark:bg-dark-card/80 backdrop-blur-sm flex flex-col items-center justify-center">
@@ -412,7 +412,7 @@ const options = [
         </div>
 
         <!-- Header -->
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between sticky top-0 bg-white dark:bg-dark-card z-10">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between sticky top-0 bg-white dark:bg-dark-card z-10">
           <h2 class="text-xl font-serif font-bold text-gray-900 dark:text-white">
             <span v-if="activeModal === 'hours'">Horários de Funcionamento</span>
             <span v-else-if="activeModal === 'questions'">Perguntas de Qualificação</span>
@@ -426,12 +426,12 @@ const options = [
         </div>
 
         <!-- Body -->
-        <div class="p-6 overflow-y-auto flex-1 bg-gray-50/50 dark:bg-transparent">
+        <div class="p-4 sm:p-6 overflow-y-auto flex-1 bg-gray-50/50 dark:bg-transparent">
           
           <!-- HORÁRIOS FORM -->
           <div v-if="activeModal === 'hours'" class="space-y-4">
              <div v-for="day in clinicHours" :key="day.day_of_week" class="flex flex-col sm:flex-row sm:items-center gap-4 bg-white dark:bg-dark-surface border border-gray-200 dark:border-white/10 p-4 rounded-sm shadow-sm transition-all hover:border-primary-200">
-               <div class="w-1/3 flex items-center justify-between sm:block">
+               <div class="w-full sm:w-1/3 flex items-center justify-between sm:block">
                   <span class="font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest text-xs">{{ daysOfWeek.find(d => d.id === day.day_of_week)?.label }}</span>
                   <label class="flex items-center cursor-pointer mt-2">
                     <div class="relative">
@@ -443,7 +443,7 @@ const options = [
                   </label>
                </div>
                
-               <div class="w-2/3 flex flex-wrap gap-2 text-sm" v-if="!day.is_closed">
+                <div class="w-full sm:w-2/3 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 text-sm" v-if="!day.is_closed">
                   <div class="flex flex-col flex-1 min-w-[70px]">
                     <span class="text-[10px] uppercase text-gray-400 mb-1">Abertura</span>
                     <input type="time" v-model="day.open_time" class="bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 rounded-sm px-2 py-1 text-gray-900 dark:text-white outline-none focus:border-primary-500">
@@ -461,7 +461,7 @@ const options = [
                     <input type="time" v-model="day.close_time" class="bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-white/10 rounded-sm px-2 py-1 text-gray-900 dark:text-white outline-none focus:border-primary-500">
                   </div>
                </div>
-               <div v-else class="w-2/3 flex items-center justify-center text-sm text-gray-400 italic">
+                <div v-else class="w-full sm:w-2/3 flex items-center sm:justify-center text-sm text-gray-400 italic">
                   Dia de descanso merecido.
                </div>
              </div>

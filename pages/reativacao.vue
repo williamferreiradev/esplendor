@@ -95,7 +95,7 @@ function getStatusLabel(status: string) {
   <div class="min-h-screen bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white font-sans transition-colors duration-300">
     <Sidebar />
 
-    <main :class="[mainMargin, 'p-8 transition-all duration-300']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-8 transition-all duration-300']">
       <!-- Header -->
       <header class="mb-8 flex items-center justify-between">
         <div class="flex items-center gap-4">
@@ -110,7 +110,7 @@ function getStatusLabel(status: string) {
       </header>
 
       <!-- Tabs -->
-      <div class="flex gap-1 bg-white dark:bg-dark-surface p-1 rounded-xl border border-gray-100 dark:border-dark-border mb-6 w-fit">
+      <div class="flex gap-1 bg-white dark:bg-dark-surface p-1 rounded-xl border border-gray-100 dark:border-dark-border mb-6 w-full sm:w-fit overflow-x-auto">
         <button 
           v-for="tab in [{ key: 'disparo', label: 'Disparo', icon: Send }, { key: 'followup', label: 'Follow-up', icon: Clock }, { key: 'historico', label: 'Histórico', icon: FileText }]"
           :key="tab.key"
@@ -128,9 +128,9 @@ function getStatusLabel(status: string) {
       </div>
 
       <!-- Tab: Disparo -->
-      <div v-if="activeTab === 'disparo'" class="grid grid-cols-3 gap-6">
+        <div v-if="activeTab === 'disparo'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left: Lead Selection (2 cols) -->
-        <div class="col-span-2 space-y-5">
+        <div class="lg:col-span-2 space-y-5">
           <!-- CSV Upload -->
           <div class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl p-5">
             <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">

@@ -362,7 +362,7 @@ onUnmounted(() => {
     <!-- Error Debug Output -->
     <pre v-if="error" class="fixed top-4 right-4 bg-red-50 text-red-600 dark:bg-red-900 dark:text-white p-4 rounded-xl z-50 max-w-md overflow-auto shadow-card">{{ error }}</pre>
 
-    <main :class="[mainMargin, 'p-6 lg:p-10 h-screen overflow-hidden flex flex-col transition-all duration-300']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-10 h-[calc(100dvh-4rem)] md:h-screen overflow-hidden flex flex-col transition-all duration-300']">
       <!-- Header -->
       <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div class="flex items-center gap-4">

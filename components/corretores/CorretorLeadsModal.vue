@@ -96,17 +96,17 @@ const getStageBadgeClasses = (lead: Cliente) => {
     <Transition name="modal">
       <div 
         v-if="modelValue && corretor" 
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4"
         @click.self="close"
       >
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/80 backdrop-blur-sm"></div>
         
         <!-- Modal Card -->
-        <div class="relative bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-sm shadow-luxury max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+        <div class="relative bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-t-2xl sm:rounded-sm shadow-luxury max-w-4xl w-full max-h-[94dvh] sm:max-h-[90vh] flex flex-col overflow-hidden">
           
           <!-- Header -->
-          <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface z-10 flex-shrink-0">
+          <div class="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface z-10 flex-shrink-0">
             <div class="flex items-center gap-3">
               <Eye class="w-5 h-5 text-primary-500" />
               <h2 class="text-xl font-bold text-gray-900 dark:text-white">Detalhes do Corretor</h2>

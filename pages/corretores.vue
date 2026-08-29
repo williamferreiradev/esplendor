@@ -161,7 +161,7 @@ const deleteCorretor = async (corretor: any) => {
   <div class="min-h-screen bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white font-sans selection:bg-primary-500 selection:text-white transition-colors duration-300">
     <Sidebar />
 
-    <main :class="[mainMargin, 'p-10 transition-all duration-300']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-10 transition-all duration-300']">
       <!-- Header -->
       <header class="mb-8">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Corretores</h1>
@@ -172,7 +172,7 @@ const deleteCorretor = async (corretor: any) => {
       <div class="bg-white dark:bg-dark-surface rounded-xl border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm transition-colors">
         
         <!-- Card Header with Icon and Count -->
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border flex items-center justify-between">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-dark-border flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
           <div class="flex items-center gap-3">
             <div class="p-2 bg-primary-100 dark:bg-primary-900/40 rounded-xl">
               <UserCircle class="w-5 h-5 text-primary-600 dark:text-primary-500" />
@@ -206,7 +206,7 @@ const deleteCorretor = async (corretor: any) => {
 
         <!-- Filters Panel -->
         <Transition name="slide">
-          <div v-if="showFilters" class="px-6 py-4 border-b border-gray-200 dark:border-dark-border bg-gray-50/80 dark:bg-dark-card/30">
+          <div v-if="showFilters" class="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-dark-border bg-gray-50/80 dark:bg-dark-card/30">
             <div class="flex flex-wrap items-center gap-6">
               <!-- Status Filter -->
               <div class="flex items-center gap-3">
@@ -230,7 +230,7 @@ const deleteCorretor = async (corretor: any) => {
         </Transition>
 
         <!-- Search Bar -->
-        <div class="px-6 py-4 bg-gray-50 dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border">
+        <div class="px-4 sm:px-6 py-4 bg-gray-50 dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border">
           <div class="relative max-w-2xl">
             <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
             <input
@@ -243,7 +243,7 @@ const deleteCorretor = async (corretor: any) => {
         </div>
 
         <!-- Table Header -->
-        <div class="px-6 py-3 bg-gray-50 dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border grid grid-cols-12 gap-4 text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider">
+        <div class="hidden md:grid px-6 py-3 bg-gray-50 dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border grid-cols-12 gap-4 text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider">
           <div class="col-span-4">Nome</div>
           <div class="col-span-3">Telefone</div>
           <div class="col-span-2 text-center">Quantidade de Leads</div>
@@ -267,10 +267,10 @@ const deleteCorretor = async (corretor: any) => {
             v-else
             v-for="corretor in filteredCorretores"
             :key="corretor.id"
-            class="px-6 py-4 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-white/5 transition-all group grid grid-cols-12 gap-4 items-center"
+            class="px-4 sm:px-6 py-4 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-white/5 transition-all group flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 md:items-center"
           >
             <!-- Name & Avatar -->
-            <div class="col-span-4 flex items-center gap-4">
+            <div class="w-full md:col-span-4 flex items-center gap-4">
               <div v-if="corretor.media_url" class="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden border border-gray-200 dark:border-dark-border shadow-sm">
                 <img :src="corretor.media_url" :alt="corretor.nome || 'Avatar'" class="w-full h-full object-cover" />
               </div>
@@ -285,20 +285,20 @@ const deleteCorretor = async (corretor: any) => {
             </div>
 
             <!-- Phone -->
-            <div class="col-span-3 flex items-center gap-2 text-sm text-gray-500 dark:text-dark-muted">
+            <div class="w-full md:col-span-3 flex items-center gap-2 text-sm text-gray-500 dark:text-dark-muted pl-14 md:pl-0">
               <Phone class="w-3.5 h-3.5" />
               <span>{{ corretor.telefone || '' }}</span>
             </div>
 
             <!-- Leads Count -->
-            <div class="col-span-2 flex items-center justify-center">
+            <div class="w-full md:col-span-2 flex items-center md:justify-center pl-14 md:pl-0">
               <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-bold bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/20 rounded-full shadow-sm">
                 {{ corretor.leads_count || 0 }} leads
               </span>
             </div>
 
             <!-- Actions -->
-            <div class="col-span-3 flex items-center justify-end gap-2">
+            <div class="w-full md:col-span-3 flex items-center justify-start md:justify-end gap-2 pl-14 md:pl-0 overflow-x-auto">
               
               <!-- Toggle Status Button -->
               <button

@@ -249,7 +249,7 @@ onUnmounted(() => {
   <div class="min-h-screen bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white font-sans selection:bg-primary-500 selection:text-white transition-colors duration-300">
     <Sidebar />
 
-    <main :class="[mainMargin, 'p-10 transition-all duration-300']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-10 transition-all duration-300']">
       <!-- Header -->
       <header class="mb-8">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Contatos</h1>
@@ -260,7 +260,7 @@ onUnmounted(() => {
       <div class="bg-white dark:bg-dark-surface rounded-xl border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm transition-colors">
         
         <!-- Card Header with Icon and Count -->
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border flex items-center justify-between">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-dark-border flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
           <div class="flex items-center gap-3">
             <div class="p-2 bg-primary-100 dark:bg-primary-900/40 rounded-xl">
               <User class="w-5 h-5 text-primary-600 dark:text-primary-500" />
@@ -287,8 +287,8 @@ onUnmounted(() => {
 
         <!-- Filters Panel -->
         <Transition name="slide">
-          <div v-if="showFilters" class="px-6 py-4 border-b border-gray-200 dark:border-dark-border bg-gray-50/80 dark:bg-dark-card/30">
-            <div class="flex flex-wrap items-center gap-6">
+          <div v-if="showFilters" class="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-dark-border bg-gray-50/80 dark:bg-dark-card/30">
+            <div class="flex flex-col lg:flex-row lg:flex-wrap lg:items-center gap-4 lg:gap-6">
               <!-- Status Filter -->
               <div class="flex items-center gap-3 overflow-x-auto max-w-full pb-2 md:pb-0">
                 <span class="text-[11px] font-semibold text-gray-400 dark:text-dark-muted uppercase tracking-wider flex-shrink-0">Status</span>
@@ -313,9 +313,9 @@ onUnmounted(() => {
               </div>
 
               <!-- Date Filter -->
-              <div class="flex items-center gap-3">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                 <span class="text-[11px] font-semibold text-gray-400 dark:text-dark-muted uppercase tracking-wider">Período</span>
-                <div class="flex items-center gap-2">
+                <div class="grid grid-cols-1 min-[420px]:grid-cols-[1fr_auto_1fr] items-center gap-2">
                   <input v-model="filterDateFrom" type="date" class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-lg px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-primary-400" />
                   <span class="text-[10px] text-gray-400">até</span>
                   <input v-model="filterDateTo" type="date" class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-lg px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-primary-400" />
@@ -329,7 +329,7 @@ onUnmounted(() => {
         </Transition>
 
         <!-- Search Bar -->
-        <div class="px-6 py-4 bg-gray-50 dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border">
+        <div class="px-4 sm:px-6 py-4 bg-gray-50 dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border">
           <div class="relative max-w-2xl">
             <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
             <input
@@ -342,7 +342,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Table Header -->
-        <div class="px-6 py-3 bg-gray-50 dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border grid grid-cols-12 gap-4 text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider">
+        <div class="hidden sm:grid px-6 py-3 bg-gray-50 dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border grid-cols-12 gap-4 text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider">
           <div class="col-span-8">Nome</div>
           <div class="col-span-4 text-right">Avaliação</div>
         </div>
@@ -365,10 +365,10 @@ onUnmounted(() => {
             v-for="contact in paginatedContacts"
             :key="contact.id"
             @click="openContactDetails(contact)"
-            class="px-6 py-4 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all group grid grid-cols-12 gap-4 items-center"
+            class="px-4 sm:px-6 py-4 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all group flex flex-col sm:grid sm:grid-cols-12 gap-3 sm:gap-4 sm:items-center"
           >
             <!-- Left: Avatar + Name + Phone -->
-            <div class="col-span-8 flex items-center gap-4">
+            <div class="w-full sm:col-span-8 flex items-center gap-4">
               <!-- Avatar -->
               <div v-if="(contact as any).media_url" class="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden border border-gray-200 dark:border-dark-border shadow-sm">
                 <img :src="(contact as any).media_url" :alt="contact.name || 'Avatar'" class="w-full h-full object-cover" />
@@ -389,7 +389,7 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div class="col-span-4 flex items-center justify-end gap-2">
+            <div class="w-full sm:col-span-4 flex flex-wrap items-center justify-start sm:justify-end gap-2 pl-14 sm:pl-0">
               <span
                 :class="['inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold border shadow-sm', getStageBadgeClass(contact.stage)]"
               >

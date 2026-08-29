@@ -4,17 +4,15 @@ import {
   Phone, 
   MessageSquare, 
   Clock, 
-  AlertCircle, 
   Filter, 
   Eye,
-  Lock, 
+  Lock,
   ChevronLeft,
   ChevronRight,
   X,
   TrendingUp,
   Users,
   FileSpreadsheet,
-  UserCheck,
   RefreshCw,
   AlertTriangle
 } from 'lucide-vue-next'
@@ -41,7 +39,6 @@ interface Lead {
 }
 
 // Reactive State
-const activeTab = ref<'geral' | 'perdidos'>('geral')
 const leads = ref<Lead[]>([])
 const stages = ref<any[]>([])
 const metrics = reactive({
@@ -55,45 +52,11 @@ const showModal = ref(false)
 const selectedLead = ref<Cliente | null>(null)
 const fullLeadsData = ref<any[]>([])
 
-// Computados de Leads Perdidos
-const lostLeads = computed(() => {
-  return fullLeadsData.value.filter((l: any) => 
-    l.stage === 'perdido' || 
-    l.situacao_nome === 'perdido' || 
-    l.estagiokanbam === 'perdido' ||
-    l.status_crm === 'perdido' ||
-    l.ativo === false
-  )
-})
-
-const lostLeadsNoBroker = computed(() => {
-  return lostLeads.value.filter((l: any) => !l.corretor_id && (!l.corretor || l.corretor === 'Sem Corretor'))
-})
-
-const exportLostLeadsCSV = () => {
-  const data = lostLeadsNoBroker.value.length > 0 ? lostLeadsNoBroker.value : [
-    { name: 'Ana Clara Moreira', phone: '5511991234567', created_at: new Date().toISOString() },
-    { name: 'Marcos Vinícius', phone: '5511976543210', created_at: new Date().toISOString() },
-    { name: 'Patrícia Gomes', phone: '5521965432109', created_at: new Date().toISOString() }
-  ]
-  
-  const csvHeader = 'Nome,Telefone,Status,Corretor,Data_Criacao\n'
-  const csvRows = data.map((l: any) => {
-    const name = `"${(l.name || 'Sem nome').replace(/"/g, '""')}"`
-    const phone = `"${(l.phone || l.remotejid || '').replace(/"/g, '""')}"`
-    const status = `"Perdido"`
-    const corretor = `"Sem Corretor"`
-    const date = `"${l.created_at || ''}"`
-    return `${name},${phone},${status},${corretor},${date}`
-  }).join('\n')
-
-  const blob = new Blob(['\uFEFF' + csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' })
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = `leads_perdidos_sem_corretor_${new Date().toISOString().split('T')[0]}.csv`
-  link.click()
-  URL.revokeObjectURL(link.href)
-}
+// Mantidos apenas para compatibilidade com o bloco legado desativado abaixo.
+// A Dashboard agora exibe exclusivamente a visão geral.
+const lostLeads = ref<any[]>([])
+const lostLeadsNoBroker = ref<any[]>([])
+const exportLostLeadsCSV = () => {}
 
 // Filter State
 const showFilters = ref(false)
@@ -323,7 +286,7 @@ onMounted(() => {
   <div class="min-h-screen text-gray-900 dark:text-dark-text font-sans transition-colors duration-300">
     <Sidebar />
 
-    <main :class="[mainMargin, 'p-10 transition-all duration-300']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-10 transition-all duration-300']">
       <!-- Header -->
       <header class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
@@ -332,30 +295,14 @@ onMounted(() => {
         </div>
         
         <div class="flex items-center gap-3">
-          <!-- Tab Navigation -->
-          <div class="flex gap-1 bg-white dark:bg-dark-surface p-1 rounded-sm border border-gray-100 dark:border-dark-border">
-            <button 
-              @click="activeTab = 'geral'" 
-              :class="['px-4 py-2 rounded-sm text-xs font-semibold transition-all', activeTab === 'geral' ? 'bg-primary-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white']"
-            >
-              Visão Geral
-            </button>
-            <button 
-              @click="activeTab = 'perdidos'" 
-              :class="['px-4 py-2 rounded-sm text-xs font-semibold transition-all flex items-center gap-1.5', activeTab === 'perdidos' ? 'bg-red-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white']"
-            >
-              <AlertTriangle class="w-3.5 h-3.5" /> Leads Perdidos
-            </button>
-          </div>
-
           <div class="hidden md:block text-sm font-medium text-gray-400 dark:text-dark-muted bg-white dark:bg-dark-surface px-4 py-2 rounded-sm border border-gray-100 dark:border-dark-border">
             {{ new Date().toLocaleDateString('pt-BR', { weekday: 'short', month: 'short', day: 'numeric' }) }}
           </div>
         </div>
       </header>
 
-      <!-- GERAL TAB CONTENT -->
-      <div v-if="activeTab === 'geral'">
+      <!-- Visão geral -->
+      <div>
         <!-- Metrics Section -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
         <!-- Card 1: Total de Leads -->
@@ -405,7 +352,7 @@ onMounted(() => {
       <!-- Recent Leads Table -->
       <div class="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border border-gray-100 dark:border-dark-border rounded-sm overflow-hidden shadow-card">
         <!-- Table Header -->
-        <div class="px-6 py-5 border-b border-gray-100 dark:border-dark-border flex justify-between items-center">
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-100 dark:border-dark-border flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
           <div class="flex items-center gap-3">
              <div class="p-2 bg-primary-50 dark:bg-primary-500/10 rounded-sm text-primary-500">
                <Phone class="w-5 h-5" />
@@ -447,10 +394,10 @@ onMounted(() => {
 
         <!-- Filters Panel -->
         <Transition name="slide">
-          <div v-if="showFilters" class="px-6 py-5 border-b border-gray-100 dark:border-dark-border bg-gray-50/80 dark:bg-dark-card/30">
-            <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+          <div v-if="showFilters" class="px-4 sm:px-6 py-5 border-b border-gray-100 dark:border-dark-border bg-gray-50/80 dark:bg-dark-card/30">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-4">
               <!-- Row 1: Status + Qualificado -->
-              <div class="flex items-center gap-3">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 overflow-x-auto">
                 <span class="text-[11px] font-semibold text-gray-400 dark:text-dark-muted uppercase tracking-wider w-20 flex-shrink-0">Status</span>
                 <div class="flex gap-1.5 bg-white dark:bg-dark-surface p-1 rounded-sm border border-gray-100 dark:border-dark-border">
                   <button 
@@ -530,22 +477,22 @@ onMounted(() => {
         </Transition>
 
         <!-- Table Content -->
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
+        <div class="w-full">
+          <table class="w-full table-fixed md:table-auto text-left border-collapse">
             <thead>
               <tr class="border-b border-gray-100 dark:border-dark-border text-gray-400 dark:text-dark-muted text-xs uppercase tracking-wider">
-                <th class="px-6 py-4 font-medium">Nome</th>
-                <th class="px-6 py-4 font-medium">Telefone</th>
-                <th class="px-6 py-4 font-medium">Interessado</th>
-                <th class="px-6 py-4 font-medium">Data Entrada</th>
-                <th class="px-6 py-4 font-medium">Status</th>
-                <th class="px-6 py-4 font-medium text-right">Ações</th>
+                <th class="w-[44%] md:w-auto px-3 sm:px-6 py-4 font-medium">Nome</th>
+                <th class="w-[34%] md:w-auto px-2 sm:px-6 py-4 font-medium">Número</th>
+                <th class="hidden md:table-cell px-6 py-4 font-medium">Interessado</th>
+                <th class="hidden md:table-cell px-6 py-4 font-medium">Data Entrada</th>
+                <th class="hidden md:table-cell px-6 py-4 font-medium">Status</th>
+                <th class="w-[22%] md:w-auto px-2 sm:px-6 py-4 font-medium text-right">Ações</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50 dark:divide-dark-border">
               <tr v-for="lead in paginatedLeads" :key="lead.id" class="group hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
                 <!-- Nome -->
-                <td class="px-6 py-4">
+                <td class="px-3 sm:px-6 py-4">
                   <div class="flex items-center gap-3">
                     <div v-if="lead.media_url" class="w-9 h-9 rounded-sm flex-shrink-0 overflow-hidden border border-gray-100 dark:border-dark-border">
                       <img :src="lead.media_url" :alt="lead.name || 'Avatar'" class="w-full h-full object-cover" />
@@ -553,19 +500,19 @@ onMounted(() => {
                     <div v-else class="w-9 h-9 rounded-sm bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center text-xs font-bold text-primary-600 dark:text-primary-400 border border-primary-100 dark:border-primary-500/20">
                       {{ lead.avatar }}
                     </div>
-                    <span class="font-medium text-gray-900 dark:text-white text-sm">{{ lead.name }}</span>
+                    <span class="font-medium text-gray-900 dark:text-white text-sm leading-tight break-words">{{ lead.name }}</span>
                   </div>
                 </td>
                 
                 <!-- Telefone -->
-                <td class="px-6 py-4">
-                  <span class="text-gray-400 dark:text-dark-muted text-sm font-mono">
+                <td class="px-2 sm:px-6 py-4">
+                  <span class="text-gray-500 dark:text-dark-muted text-xs sm:text-sm font-mono break-all">
                     {{ lead.phone }}
                   </span>
                 </td>
 
-                <!-- Interessado -->
-                <td class="px-6 py-4">
+                <!-- Interessado: exibido apenas no desktop -->
+                <td class="hidden md:table-cell px-6 py-4">
                   <span v-if="lead.interested" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                     Sim
                   </span>
@@ -574,36 +521,36 @@ onMounted(() => {
                   </span>
                 </td>
 
-                <!-- Data Entrada -->
-                <td class="px-6 py-4 text-sm text-gray-400 dark:text-dark-muted">
+                <!-- Data de entrada: exibida apenas no desktop -->
+                <td class="hidden md:table-cell px-6 py-4 text-sm text-gray-400 dark:text-dark-muted">
                   {{ new Date(lead.created_at).toLocaleDateString('pt-BR') }}
                 </td>
 
-                <!-- Status -->
-                <td class="px-6 py-4">
+                <!-- Status: exibido apenas no desktop -->
+                <td class="hidden md:table-cell px-6 py-4">
                   <span v-if="lead.status === 'active'" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     Ativo
                   </span>
                   <span v-else-if="lead.status === 'locked'" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-xs font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500">
-                     <Lock class="w-3 h-3" />
-                     Travado
+                    <Lock class="w-3 h-3" />
+                    Travado
                   </span>
                 </td>
 
                 <!-- Ações -->
-                <td class="px-6 py-4 text-right">
-                  <div class="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                <td class="px-2 sm:px-6 py-4 text-right">
+                  <div class="flex items-center justify-end gap-0.5 sm:gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                     <button 
                       @click="openLeadDetails(lead.id)"
-                      class="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-sm transition-all" 
+                      class="w-10 h-10 md:w-auto md:h-auto md:p-2 flex items-center justify-center text-gray-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-sm transition-all"
                       title="Ver Detalhes"
                     >
                       <Eye class="w-4 h-4" />
                     </button>
                     <button 
                       @click="openChat(lead.id)" 
-                      class="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-sm transition-all" 
+                      class="w-10 h-10 md:w-auto md:h-auto md:p-2 flex items-center justify-center text-gray-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-sm transition-all"
                       title="Abrir Chat"
                     >
                       <MessageSquare class="w-4 h-4" />
@@ -616,7 +563,7 @@ onMounted(() => {
         </div>
 
         <!-- Footer / Pagination -->
-        <div class="px-6 py-4 border-t border-gray-100 dark:border-dark-border flex justify-between items-center">
+        <div class="px-4 sm:px-6 py-4 border-t border-gray-100 dark:border-dark-border flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
           <p class="text-xs text-gray-400 dark:text-dark-muted">
             Mostrando <span class="text-gray-700 dark:text-white font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredLeads.length) }}</span> 
             de {{ filteredLeads.length }} clientes
@@ -673,8 +620,8 @@ onMounted(() => {
       </div>
       </div>
 
-      <!-- LEADS PERDIDOS TAB CONTENT -->
-      <div v-else-if="activeTab === 'perdidos'" class="space-y-8">
+      <!-- Bloco legado desativado: a Dashboard exibe somente a visão geral -->
+      <div v-if="false" class="space-y-8">
         <!-- Lost Metrics Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
           <!-- Total Perdidos -->

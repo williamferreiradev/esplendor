@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useSupabaseClient } from '#imports'
-import { MessageSquare, Phone, Search, FileText, Menu, X, BotOff, Bot, PhoneForwarded } from 'lucide-vue-next'
+import { MessageSquare, Phone, Search, FileText, Menu, X, BotOff, Bot, PhoneForwarded, ArrowLeft } from 'lucide-vue-next'
 
 const route = useRoute()
 const { mainMargin } = useSidebarState()
@@ -454,11 +454,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="h-screen w-full bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white font-sans flex overflow-hidden transition-colors duration-300">
+  <div class="h-dvh w-full bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white font-sans flex overflow-hidden transition-colors duration-300">
     <Sidebar />
 
     <!-- Chat Sidebar (Left) -->
-    <aside :class="[mainMargin, 'w-80 border-r border-gray-100 dark:border-dark-border flex flex-col bg-white dark:bg-dark-surface flex-shrink-0 transition-all duration-300']">
+    <aside :class="[mainMargin, selectedChat ? 'hidden md:flex' : 'flex', 'w-full md:w-80 border-r border-gray-100 dark:border-dark-border flex-col bg-white dark:bg-dark-surface flex-shrink-0 transition-all duration-300']">
       <!-- Header -->
       <div class="p-5 border-b border-gray-100 dark:border-dark-border">
         <div class="flex items-center justify-between mb-3">
@@ -516,16 +516,19 @@ onUnmounted(() => {
     </aside>
 
     <!-- Chat Content (Middle) -->
-    <section class="flex-1 flex flex-col bg-gray-50 dark:bg-dark-bg relative min-w-0 transition-colors duration-300">
+    <section :class="[selectedChat ? 'flex' : 'hidden md:flex', 'flex-1 flex-col bg-gray-50 dark:bg-dark-bg relative min-w-0 pt-16 md:pt-0 transition-colors duration-300']">
       <div v-if="selectedChat" class="flex-1 flex flex-col overflow-hidden relative">
         <!-- Header -->
-        <header class="px-6 py-4 border-b border-gray-100 dark:border-dark-border bg-white dark:bg-dark-surface flex items-center justify-between z-20">
-          <div class="flex items-center gap-3">
+        <header class="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-100 dark:border-dark-border bg-white dark:bg-dark-surface flex items-center justify-between gap-2 z-20">
+          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <button type="button" class="w-10 h-10 -ml-1 rounded-xl flex md:hidden items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-card" aria-label="Voltar para conversas" @click="selectedChat = null; isSidebarOpen = false">
+              <ArrowLeft class="w-5 h-5" />
+            </button>
             <div class="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold">
               {{ selectedChat.avatar }}
             </div>
-            <div>
-              <h2 class="font-semibold text-gray-900 dark:text-white text-sm">{{ selectedChat.name }}</h2>
+            <div class="min-w-0">
+              <h2 class="font-semibold text-gray-900 dark:text-white text-sm truncate">{{ selectedChat.name }}</h2>
               <p class="text-xs text-gray-400 dark:text-dark-muted flex items-center gap-1">
                 <Phone class="w-3 h-3" />
                 {{ selectedChat.phone }}
@@ -536,7 +539,7 @@ onUnmounted(() => {
           <div class="flex items-center gap-2">
             <NuxtLink 
               :to="`/crm?clientId=${selectedChat.id}`"
-              class="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-dark-card text-gray-600 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-dark-border transition-all border border-gray-100 dark:border-dark-border"
+              class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-dark-card text-gray-600 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-dark-border transition-all border border-gray-100 dark:border-dark-border"
             >
               <FileText class="w-3 h-3" /> Ver no CRM
             </NuxtLink>
@@ -553,7 +556,7 @@ onUnmounted(() => {
         </header>
 
         <!-- Messages Area -->
-        <div ref="messagesContainer" class="flex-1 overflow-y-auto overflow-x-hidden p-6 flex flex-col gap-4 relative custom-scrollbar pb-24">
+        <div ref="messagesContainer" class="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 sm:p-6 flex flex-col gap-4 relative custom-scrollbar pb-24">
           <div v-if="messagesLoading" class="flex-1 flex items-center justify-center">
              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
           </div>
@@ -582,7 +585,7 @@ onUnmounted(() => {
             <div
               v-else
               :class="[
-                'max-w-md px-4 py-3 rounded-2xl shadow-sm overflow-hidden shrink-0',
+                'max-w-[88%] sm:max-w-md px-4 py-3 rounded-2xl shadow-sm overflow-hidden shrink-0',
                 message.sender === 'me' 
                   ? 'bg-primary-500 text-white rounded-br-none' 
                   : 'bg-white dark:bg-dark-surface text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-dark-border rounded-bl-none'
@@ -612,7 +615,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Floating Action: Generate Summary -->
-        <div class="absolute bottom-20 right-6 z-30">
+        <div class="absolute bottom-20 right-3 sm:right-6 z-30">
            <button 
              @click="generateSummary"
              :disabled="summaryLoading"
@@ -644,10 +647,13 @@ onUnmounted(() => {
     <!-- Side Actions Drawer (Right) -->
     <aside 
       v-if="isSidebarOpen && selectedChat" 
-      class="w-72 border-l border-gray-100 dark:border-dark-border bg-white dark:bg-dark-surface flex flex-col flex-shrink-0 transition-colors"
+       class="fixed inset-x-0 bottom-0 top-16 z-40 w-full md:static md:w-72 border-l border-gray-100 dark:border-dark-border bg-white dark:bg-dark-surface flex flex-col flex-shrink-0 transition-colors"
     >
-      <div class="p-5 border-b border-gray-100 dark:border-dark-border">
+      <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-dark-border flex items-center justify-between">
         <h2 class="font-bold text-gray-900 dark:text-white text-base">Ações</h2>
+        <button type="button" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-100 dark:hover:bg-dark-card" aria-label="Fechar ações" @click="isSidebarOpen = false">
+          <X class="w-5 h-5" />
+        </button>
       </div>
 
       <div class="p-5 flex flex-col gap-6 flex-1 overflow-y-auto">

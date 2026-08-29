@@ -231,7 +231,7 @@ onMounted(() => fetchData())
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white font-sans transition-colors duration-300">
     <Sidebar />
-    <main :class="[mainMargin, 'p-8 transition-all duration-300 max-w-5xl']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-8 transition-all duration-300 max-w-5xl']">
       
       <!-- Back + Title -->
       <header class="mb-8">
@@ -255,7 +255,7 @@ onMounted(() => fetchData())
 
       <template v-else>
         <!-- Metrics Grid -->
-        <div class="grid grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
           <div v-for="card in metricCards" :key="card.title" class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl p-4">
             <div class="flex items-center gap-2 mb-2">
               <div :class="['p-1.5 rounded-lg', card.bg]">

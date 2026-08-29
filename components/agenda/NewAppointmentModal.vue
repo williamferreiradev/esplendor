@@ -245,7 +245,7 @@ const closeModal = () => {
   <Transition name="modal-fade">
     <div 
       v-if="modelValue" 
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      class="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto"
       role="dialog"
       aria-modal="true"
     >
@@ -256,10 +256,10 @@ const closeModal = () => {
       />
 
       <!-- Modal Card -->
-      <div class="relative w-full max-w-lg bg-white dark:bg-dark-surface border border-gray-200/80 dark:border-dark-border rounded-2xl shadow-2xl overflow-visible my-auto z-10 transition-all">
+      <div class="relative w-full max-w-lg max-h-[94dvh] sm:max-h-[90vh] bg-white dark:bg-dark-surface border border-gray-200/80 dark:border-dark-border rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-y-auto sm:my-auto z-10 transition-all">
         
         <!-- Header with generous padding -->
-        <div class="px-6 py-5 border-b border-gray-100 dark:border-dark-border flex items-center justify-between bg-gray-50/80 dark:bg-dark-card/60 rounded-t-2xl">
+        <div class="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 dark:border-dark-border flex items-center justify-between bg-gray-50/80 dark:bg-dark-card/60 rounded-t-2xl sticky top-0 z-20">
           <div class="flex items-center gap-3.5">
             <div class="p-2.5 bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-xl border border-primary-100 dark:border-primary-500/20 shadow-sm">
               <Calendar class="w-5 h-5" />

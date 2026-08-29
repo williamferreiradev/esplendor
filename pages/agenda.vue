@@ -202,9 +202,9 @@ const todayCount = computed(() => {
   <div class="min-h-screen bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white font-sans transition-colors duration-300">
     <Sidebar />
 
-    <main :class="[mainMargin, 'p-8 transition-all duration-300']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-8 transition-all duration-300']">
       <!-- Header -->
-      <header class="mb-6 flex items-center justify-between">
+      <header class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div class="flex items-center gap-4">
           <div class="p-2.5 bg-primary-50 dark:bg-primary-500/10 rounded-xl text-primary-500">
             <CalendarDays class="w-6 h-6" />
@@ -232,7 +232,7 @@ const todayCount = computed(() => {
             <button @click="prevWeek" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-card transition-colors">
               <ChevronLeft class="w-4 h-4" />
             </button>
-            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-[200px] text-center">{{ weekLabel }}</span>
+            <span class="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-[150px] sm:min-w-[200px] text-center">{{ weekLabel }}</span>
             <button @click="nextWeek" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-card transition-colors">
               <ChevronRight class="w-4 h-4" />
             </button>
@@ -241,7 +241,7 @@ const todayCount = computed(() => {
           <!-- Novo Agendamento Button -->
           <button 
             @click="isNewModalOpen = true"
-            class="flex items-center gap-2 px-3.5 py-1.5 bg-primary-500 hover:bg-primary-600 text-white font-semibold text-xs rounded-lg shadow-sm hover:shadow transition-all ml-1"
+            class="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-semibold text-xs rounded-lg shadow-sm hover:shadow transition-all w-full sm:w-auto sm:ml-1"
           >
             <Plus class="w-4 h-4" />
             <span>Novo Agendamento</span>
@@ -250,9 +250,9 @@ const todayCount = computed(() => {
       </header>
 
       <!-- Calendar Grid -->
-      <div class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl overflow-hidden">
+      <div class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl overflow-x-auto">
         <!-- Day Headers -->
-        <div class="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-100 dark:border-dark-border">
+        <div class="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-100 dark:border-dark-border min-w-[860px]">
           <div class="p-2"></div>
           <div 
             v-for="(day, idx) in weekDays" 
@@ -273,7 +273,7 @@ const todayCount = computed(() => {
         </div>
 
         <!-- Time Slots -->
-        <div class="max-h-[calc(100vh-260px)] overflow-y-auto">
+        <div class="max-h-[calc(100dvh-300px)] md:max-h-[calc(100vh-260px)] overflow-y-auto min-w-[860px]">
           <div v-for="hour in hours" :key="hour" class="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-50 dark:border-dark-border/50 min-h-[70px]">
             <!-- Hour Label -->
             <div class="p-2 text-[11px] font-medium text-gray-400 dark:text-dark-muted text-right pr-3 pt-1">

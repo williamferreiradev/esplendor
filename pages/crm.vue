@@ -169,9 +169,9 @@ onUnmounted(() => {
     <!-- Error Debug Output -->
     <pre v-if="error" class="fixed top-4 right-4 bg-red-50 text-red-600 dark:bg-red-900 dark:text-white p-4 rounded-xl z-50 max-w-md overflow-auto shadow-card">{{ error }}</pre>
 
-    <main :class="[mainMargin, 'p-10 h-screen overflow-hidden flex flex-col transition-all duration-300']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-10 h-[calc(100dvh-4rem)] md:h-screen overflow-hidden flex flex-col transition-all duration-300']">
       <!-- Header -->
-      <header class="flex justify-between items-center mb-8">
+      <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-5 lg:mb-8">
         <div class="flex items-center gap-4">
           <div class="p-2.5 bg-primary-50 dark:bg-primary-500/10 rounded-xl text-primary-500">
              <MessageSquare class="w-5 h-5" />
@@ -187,7 +187,7 @@ onUnmounted(() => {
           </div>
         </div>
         
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 overflow-x-auto max-w-full pb-1 lg:pb-0">
           <button 
             @click="downloadCSV"
             class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 text-sm font-medium transition-colors shadow-sm"
@@ -210,7 +210,7 @@ onUnmounted(() => {
             <button 
               @click="currentView = 'table'"
               :class="[
-                 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                 'flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
                  currentView === 'table' ? 'bg-primary-500 text-white shadow-luxury' : 'text-gray-500 dark:text-dark-muted hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
               ]"
             >

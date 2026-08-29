@@ -447,25 +447,25 @@ onMounted(() => { fetchData() })
   <div class="min-h-screen bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white font-sans transition-colors duration-300">
     <Sidebar />
 
-    <main :class="[mainMargin, 'p-8 transition-all duration-300']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-8 transition-all duration-300']">
       <!-- Header -->
-      <header class="mb-8 flex items-center justify-between">
-        <div class="flex items-center gap-4">
+      <header class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
           <div class="p-2.5 bg-primary-50 dark:bg-primary-500/10 rounded-xl text-primary-500">
             <BarChart3 class="w-6 h-6" />
           </div>
-          <div>
-            <h1 class="text-xl font-bold tracking-tight">Relatórios & Performance</h1>
-            <p class="text-gray-400 dark:text-dark-muted text-sm mt-0.5">Análise semanal do pipeline e automação IA</p>
+          <div class="min-w-0">
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight leading-tight">Relatórios & Performance</h1>
+            <p class="text-gray-400 dark:text-dark-muted text-xs sm:text-sm mt-1 leading-snug">Análise semanal do pipeline e automação IA</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-col min-[420px]:flex-row gap-3 w-full lg:w-auto">
           <!-- Week Dropdown (scalable) -->
-          <div class="relative">
+          <div class="relative flex-1 min-w-0 min-[420px]:flex-none">
             <button 
               @click="weekDropdownOpen = !weekDropdownOpen"
-              class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-card transition-all shadow-sm min-w-[200px] justify-between"
+              class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-card transition-all shadow-sm w-full min-[420px]:min-w-[200px] justify-between"
             >
               <Calendar class="w-4 h-4 text-primary-500" />
               <span>{{ currentWeekShort }}</span>
@@ -473,7 +473,7 @@ onMounted(() => { fetchData() })
             </button>
             
             <Transition name="dropdown">
-              <div v-if="weekDropdownOpen" class="absolute right-0 top-full mt-1.5 w-64 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl shadow-lg z-20 py-1 max-h-[300px] overflow-y-auto">
+              <div v-if="weekDropdownOpen" class="absolute inset-x-0 min-[420px]:left-auto min-[420px]:w-64 top-full mt-1.5 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl shadow-lg z-20 py-1 max-h-[300px] overflow-y-auto">
                 <button
                   v-for="w in weeks"
                   :key="w.key"
@@ -493,7 +493,7 @@ onMounted(() => { fetchData() })
             </Transition>
           </div>
 
-          <button class="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-xl shadow-sm text-xs font-semibold hover:bg-primary-600 transition-all">
+          <button class="flex flex-shrink-0 items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-primary-500 text-white rounded-xl shadow-sm text-xs font-semibold hover:bg-primary-600 transition-all">
             <Download class="w-3.5 h-3.5" />
             Exportar
           </button>
@@ -507,16 +507,16 @@ onMounted(() => { fetchData() })
 
       <template v-else>
         <!-- Week Title Banner -->
-        <div class="mb-6 flex items-center gap-3">
-          <div class="flex items-center gap-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl px-5 py-3">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0">
+          <div class="w-full sm:w-auto min-w-0 flex items-start sm:items-center gap-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl px-4 sm:px-5 py-3">
             <Calendar class="w-5 h-5 text-primary-500" />
-            <span class="text-lg font-bold text-gray-900 dark:text-white">{{ currentReport.title || currentWeekLabel }}</span>
+            <span class="min-w-0 text-base sm:text-lg font-bold leading-snug text-gray-900 dark:text-white break-words">{{ currentReport.title || currentWeekLabel }}</span>
           </div>
           <span class="text-xs text-gray-400 dark:text-dark-muted">{{ currentMetrics.totalLeads || 0 }} leads nesta semana</span>
         </div>
 
         <!-- Metric Cards Grid -->
-        <div class="grid grid-cols-6 gap-4 mb-6">
+        <div class="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-6">
           <div
             v-for="card in metricCards"
             :key="card.title"
@@ -533,11 +533,11 @@ onMounted(() => { fetchData() })
         </div>
 
         <!-- Two Column Layout: Report + Charts -->
-        <div class="grid grid-cols-5 gap-6 mb-6">
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-6">
           <!-- Weekly Report (3 cols) -->
-          <div class="col-span-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl overflow-hidden">
+          <div class="xl:col-span-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl overflow-hidden">
             <!-- Report Header -->
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-dark-border flex items-center justify-between">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-dark-border flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
               <div class="flex items-center gap-2.5">
                 <div class="p-1.5 bg-primary-50 dark:bg-primary-500/10 rounded-lg">
                   <BarChart3 class="w-4 h-4 text-primary-500" />
@@ -602,7 +602,7 @@ onMounted(() => { fetchData() })
           </div>
 
           <!-- Charts (2 cols) -->
-          <div class="col-span-2 space-y-6">
+          <div class="xl:col-span-2 space-y-6">
             <!-- Funnel Chart -->
             <div class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl p-5">
               <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">

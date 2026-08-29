@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useSupabaseClient, useSupabaseUser } from '#imports'
 import { 
   LayoutDashboard, 
@@ -17,12 +17,16 @@ import {
   Settings, 
   CalendarDays, 
   Clock,
-  FileCheck 
+  FileCheck,
+  Menu,
+  X
 } from 'lucide-vue-next'
 
-const { isCollapsed, toggleSidebar } = useSidebarState()
+const { isCollapsed, isMobileOpen, toggleSidebar, toggleMobileSidebar, closeMobileSidebar } = useSidebarState()
+const route = useRoute()
 const supabase = useSupabaseClient<any>()
 const currentUser = useSupabaseUser()
+const showLabels = computed(() => !isCollapsed.value || isMobileOpen.value)
 
 const leadsCount = ref(0)
 const semCorretorCount = ref(0)
@@ -100,6 +104,8 @@ onUnmounted(() => {
   }
 })
 
+watch(() => route.fullPath, closeMobileSidebar)
+
 const navigation = computed(() => [
   { name: 'PRINCIPAL', items: [
     { name: 'Dashboard', icon: LayoutDashboard, route: '/dashboard' },
@@ -129,26 +135,59 @@ const handleLogout = async () => {
 </script>
 
 <template>
+  <!-- Mobile top bar -->
+  <header class="fixed inset-x-0 top-0 z-[60] h-16 px-4 flex items-center justify-between border-b border-gray-100 dark:border-dark-border bg-white/95 dark:bg-dark-bg/95 backdrop-blur-xl md:hidden">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-lg bg-primary-500 flex items-center justify-center shadow-luxury">
+        <Building class="w-4 h-4 text-white" />
+      </div>
+      <div>
+        <span class="text-gray-900 dark:text-white font-black text-sm tracking-tight block leading-none">ESPLENDOR</span>
+        <span class="text-[9px] text-gray-400 dark:text-dark-muted font-semibold uppercase tracking-widest">Imóveis</span>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="w-11 h-11 rounded-xl flex items-center justify-center text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+      :aria-label="isMobileOpen ? 'Fechar menu' : 'Abrir menu'"
+      :aria-expanded="isMobileOpen"
+      @click="toggleMobileSidebar"
+    >
+      <X v-if="isMobileOpen" class="w-6 h-6" />
+      <Menu v-else class="w-6 h-6" />
+    </button>
+  </header>
+
+  <button
+    v-if="isMobileOpen"
+    type="button"
+    class="fixed inset-0 z-[51] bg-gray-950/50 backdrop-blur-[2px] md:hidden"
+    aria-label="Fechar menu"
+    @click="closeMobileSidebar"
+  />
+
   <aside 
     :class="[
-      'h-screen bg-white/95 dark:bg-dark-bg/95 backdrop-blur-2xl border-r border-gray-100 dark:border-dark-border flex flex-col fixed left-0 top-0 overflow-hidden z-50 sidebar-transition select-none',
-      isCollapsed ? 'w-20' : 'w-64'
+      'h-dvh bg-white/95 dark:bg-dark-bg/95 backdrop-blur-2xl border-r border-gray-100 dark:border-dark-border flex flex-col fixed left-0 top-0 overflow-hidden z-[55] sidebar-transition select-none',
+      'w-[min(18rem,86vw)] md:translate-x-0',
+      isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full',
+      isCollapsed ? 'md:w-20' : 'md:w-72'
     ]"
   >
     <!-- Header / Logo -->
-    <div class="h-14 flex items-center border-b border-gray-100 dark:border-dark-border flex-shrink-0" :class="isCollapsed ? 'px-3 justify-center' : 'px-4 justify-between'">
-      <div class="flex items-center gap-2.5 group cursor-pointer" :class="isCollapsed ? 'justify-center' : ''">
+    <div class="h-14 flex items-center border-b border-gray-100 dark:border-dark-border flex-shrink-0" :class="!showLabels ? 'px-3 justify-center' : 'px-4 justify-between'">
+      <div class="flex items-center gap-2.5 group cursor-pointer" :class="!showLabels ? 'justify-center' : ''">
          <div class="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center shadow-luxury sidebar-transition group-hover:scale-105 flex-shrink-0">
             <Building class="w-4 h-4 text-white" />
          </div>
-         <div v-if="!isCollapsed" class="sidebar-text-transition overflow-hidden">
+         <div v-if="showLabels" class="sidebar-text-transition overflow-hidden">
            <span class="text-gray-900 dark:text-white font-black text-base tracking-tight block whitespace-nowrap leading-none">ESPLENDOR</span>
            <span class="text-[10px] text-gray-400 dark:text-dark-muted font-semibold whitespace-nowrap uppercase tracking-widest leading-none mt-0.5 block">Imóveis</span>
          </div>
       </div>
       <button 
         @click="toggleSidebar"
-        class="p-1 rounded-lg text-gray-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 sidebar-transition"
+        class="hidden md:flex p-2 rounded-lg text-gray-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 sidebar-transition"
         :title="isCollapsed ? 'Expandir menu' : 'Recolher menu'"
       >
         <ChevronsLeft v-if="!isCollapsed" class="w-4 h-4" />
@@ -157,10 +196,10 @@ const handleLogout = async () => {
     </div>
 
     <!-- Navigation -->
-    <div class="flex-1 overflow-y-auto hide-scrollbar py-2" :class="isCollapsed ? 'px-2' : 'px-2.5'">
+    <div class="flex-1 overflow-y-auto hide-scrollbar py-2" :class="!showLabels ? 'px-2' : 'px-2.5'">
       <div v-for="section in navigation" :key="section.name" class="mb-2.5">
         <h3 
-          v-if="!isCollapsed" 
+          v-if="showLabels"
           class="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-[0.12em] px-3 mb-1 mt-1.5 sidebar-text-transition"
         >
           {{ section.name }}
@@ -171,9 +210,10 @@ const handleLogout = async () => {
           <li v-for="item in section.items" :key="item.name">
             <NuxtLink 
               :to="item.route" 
+              @click="closeMobileSidebar"
               :class="[
                 'flex items-center rounded-lg text-[13px] font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/70 dark:hover:bg-white/5 sidebar-transition group relative border-l-2 border-transparent',
-                isCollapsed ? 'justify-center p-2.5' : 'gap-2.5 px-3 py-1.5',
+                !showLabels ? 'justify-center p-2.5' : 'gap-2.5 px-3 py-2.5 md:py-1.5',
                 (item as any).disabled ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''
               ]"
               active-class="!text-primary-500 !border-primary-500 !font-semibold bg-primary-50/50 dark:bg-primary-500/10"
@@ -185,11 +225,11 @@ const handleLogout = async () => {
                 class="w-[17px] h-[17px] sidebar-transition flex-shrink-0" 
               />
               
-              <span v-if="!isCollapsed" class="flex-1 sidebar-text-transition truncate">{{ item.name }}</span>
+              <span v-if="showLabels" class="flex-1 sidebar-text-transition truncate">{{ item.name }}</span>
 
               <!-- Badge -->
               <span 
-                v-if="(item as any).badge && !isCollapsed" 
+                v-if="(item as any).badge && showLabels"
                 class="bg-primary-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full shadow-sm flex-shrink-0"
               >
                 {{ (item as any).badge }}
@@ -197,7 +237,7 @@ const handleLogout = async () => {
 
               <!-- Collapsed badge dot -->
               <span 
-                v-if="(item as any).badge && isCollapsed" 
+                v-if="(item as any).badge && !showLabels"
                 class="absolute top-1.5 right-1.5 w-2 h-2 bg-primary-500 rounded-full"
               ></span>
             </NuxtLink>
@@ -211,17 +251,17 @@ const handleLogout = async () => {
       <div 
         :class="[
           'flex items-center sidebar-transition',
-          isCollapsed ? 'flex-col gap-2 justify-center' : 'gap-2 justify-between'
+          !showLabels ? 'flex-col gap-2 justify-center' : 'gap-2 justify-between'
         ]"
       >
         <!-- User Info -->
-        <div class="flex items-center gap-2 min-w-0" :class="isCollapsed ? 'justify-center' : 'flex-1'">
+        <div class="flex items-center gap-2 min-w-0" :class="!showLabels ? 'justify-center' : 'flex-1'">
           <!-- Avatar -->
           <div class="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-500/10 border border-primary-100 dark:border-primary-500/20 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-xs flex-shrink-0 uppercase shadow-sm">
             {{ currentUser?.user_metadata?.full_name?.charAt(0) || currentUser?.email?.charAt(0) || 'U' }}
           </div>
           
-          <div v-if="!isCollapsed" class="min-w-0 flex-1">
+          <div v-if="showLabels" class="min-w-0 flex-1">
             <p class="text-xs font-semibold text-gray-900 dark:text-white truncate leading-tight">
               {{ currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Corretor' }}
             </p>
@@ -230,7 +270,7 @@ const handleLogout = async () => {
         </div>
 
         <!-- Controls: Theme Toggle & Logout -->
-        <div class="flex items-center gap-0.5 flex-shrink-0" :class="isCollapsed ? 'flex-col' : ''">
+        <div class="flex items-center gap-0.5 flex-shrink-0" :class="!showLabels ? 'flex-col' : ''">
           <ThemeToggle :compact="true" />
           <button 
             @click="handleLogout" 

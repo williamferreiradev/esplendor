@@ -191,7 +191,7 @@ const confirmDelete = async (id: number) => {
   <div class="min-h-screen bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white font-sans transition-colors duration-300">
     <Sidebar />
 
-    <main :class="[mainMargin, 'p-10 min-h-screen flex flex-col transition-all duration-300']">
+    <main :class="[mainMargin, 'px-4 py-5 sm:px-6 lg:p-10 min-h-screen flex flex-col transition-all duration-300']">
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
@@ -370,4 +370,3 @@ const confirmDelete = async (id: number) => {
     </div>
   </div>
 </template>
-

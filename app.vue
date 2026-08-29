@@ -20,9 +20,26 @@ html {
 
 body {
   min-height: 100vh;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at top left, rgba(10, 61, 143, 0.04), transparent 26%),
     linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 .dark body {
